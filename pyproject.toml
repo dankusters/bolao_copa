@@ -1,0 +1,11 @@
+[project]
+name = "bolao-copa"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "dotenv>=0.9.9",
+    "flask>=3.1.3",
+    "twilio>=9.10.9",
+]
