@@ -1,20 +1,8 @@
-import os
-import requests
 from flask import Flask, request, jsonify
-from dotenv import load_dotenv
-
-load_dotenv(override=True)
+from config import VERIFY_TOKEN, RECIPIENT_NUMBER
+from whatsapp import enviar_mensagem, processar_webhook
 
 app = Flask(__name__)
-
-# ============================================================
-# CONFIGURAÇÃO
-# ============================================================
-ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
-PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID")
-VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
-API_VERSION = "v25.0"
-API_URL = f"https://graph.facebook.com/{API_VERSION}/{PHONE_NUMBER_ID}/messages"
 
 
 # rota raiz
@@ -22,63 +10,10 @@ API_URL = f"https://graph.facebook.com/{API_VERSION}/{PHONE_NUMBER_ID}/messages"
 def root():
     return "Hello World!"
 
-# ============================================================
-# ENVIAR MENSAGEM DE TEXTO
-# ============================================================
-def enviar_mensagem(numero_destino: str, texto: str):
-    """Envia uma mensagem de texto simples via WhatsApp Cloud API."""
-    headers = {
-        "Authorization": f"Bearer {ACCESS_TOKEN}",
-        "Content-Type": "application/json",
-    }
-
-    payload = {
-        "messaging_product": "whatsapp",
-        "to": numero_destino,
-        "type": "template",
-        "template": {
-            "name": "main_bolao",
-            "language": {
-                "code": "pt_BR"
-            },
-            "components": [
-                {
-                    "type": "header",
-                    "parameters": [
-                        {
-                            "type": "image",
-                            "image": {
-                                "link": "https://placehold.co/400x400/png"
-                            }
-                        }
-                    ]
-                },
-                {
-                    "type": "body",
-                    "parameters": [
-                        {
-                            "type": "text",
-                            "text": texto
-                        }
-                    ]
-                }
-            ]
-        }
-    }
-
-    response = requests.post(API_URL, headers=headers, json=payload)
-
-    if response.status_code == 200:
-        print(f"[OK] Mensagem enviada para {numero_destino}")
-    else:
-        print(f"[ERRO] {response.status_code}: {response.json()}")
-
-    return response.json()
-
 
 # ============================================================
-# WEBHOOK - VERIFICAÇÃO (GET)
-# A Meta envia um GET para validar o webhook na configuração
+# WEBHOOK - VERIFICACAO (GET)
+# A Meta envia um GET para validar o webhook na configuracao
 # ============================================================
 @app.route("/webhook", methods=["GET"])
 def verificar_webhook():
@@ -101,30 +36,7 @@ def verificar_webhook():
 @app.route("/webhook", methods=["POST"])
 def receber_mensagem():
     data = request.get_json()
-
-    # Verificar se é uma notificação válida do WhatsApp
-    if data.get("object") == "whatsapp_business_account":
-        for entry in data.get("entry", []):
-            for change in entry.get("changes", []):
-                value = change.get("value", {})
-                messages = value.get("messages", [])
-
-                for msg in messages:
-                    numero_remetente = msg.get("from")
-                    tipo_mensagem = msg.get("type")
-
-                    if tipo_mensagem == "text":
-                        texto_recebido = msg["text"]["body"]
-                        print(f"[MSG] Mensagem de {numero_remetente}: {texto_recebido}")
-
-                        # Responder automaticamente (exemplo)
-                        enviar_mensagem(
-                            numero_remetente,
-                            f"Recebi sua mensagem: \"{texto_recebido}\""
-                        )
-                    else:
-                        print(f"[MSG] Mensagem tipo '{tipo_mensagem}' de {numero_remetente}")
-
+    processar_webhook(data)
     return jsonify({"status": "ok"}), 200
 
 
@@ -133,8 +45,7 @@ def receber_mensagem():
 # ============================================================
 @app.route("/enviar", methods=["GET"])
 def enviar_teste():
-    numero = os.getenv("RECIPIENT_NUMBER")
-    resultado = enviar_mensagem(numero, "Daniel")
+    resultado = enviar_mensagem(RECIPIENT_NUMBER, "Daniel")
     return jsonify(resultado)
 
 
