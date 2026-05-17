@@ -37,11 +37,32 @@ def enviar_mensagem(numero_destino: str, texto: str):
         "to": numero_destino,
         "type": "template",
         "template": {
-            "name": "hello_world",
+            "name": "main_bolao",
             "language": {
-                "code": "en_US",
-                "policy": "deterministic"
-            }
+                "code": "pt_BR"
+            },
+            "components": [
+                {
+                    "type": "header",
+                    "parameters": [
+                        {
+                            "type": "image",
+                            "image": {
+                                "link": "https://placehold.co/400x400/png"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "body",
+                    "parameters": [
+                        {
+                            "type": "text",
+                            "text": texto
+                        }
+                    ]
+                }
+            ]
         }
     }
 
@@ -113,7 +134,7 @@ def receber_mensagem():
 @app.route("/enviar", methods=["GET"])
 def enviar_teste():
     numero = os.getenv("RECIPIENT_NUMBER")
-    resultado = enviar_mensagem(numero, "Ola! Mensagem de teste do Bolao da Copa!")
+    resultado = enviar_mensagem(numero, "Daniel")
     return jsonify(resultado)
 
 
@@ -124,4 +145,4 @@ if __name__ == "__main__":
     print("=> Servidor rodando em http://localhost:5000")
     print("=> Webhook: http://localhost:5000/webhook")
     print("=> Teste de envio: http://localhost:5000/enviar")
-    app.run(debug=True, port=5000, use_reloader=False)
+    app.run(debug=True, port=5000)
