@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "bolaodacopa-496702",
+  "private_key_id": "2ad378872f8807efa1edb07db70900bbab5ab54d",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCvp5xRHPbxQfWZ\nopSJx9lRDZZ5M5XZZ1ZItewTK1qY66m/NHLjaRb17UrhuyKCIv0lBvARE8OviaXw\njqFgJXf7SjgWEOBVQ94nK87lxw2DDz4XL3ljX02DJERJgw+0//Up5hr6sxY/VCd3\n3Mo2IRp58ArcM0Hci6YdYbe3/HWuFjAxIrN4ESPOyvQqWULkzXQX1y1o2ecCSrxc\n4+q/RGvpXvCzUTWz0Qf6iSx2F2uY1hKWdjw8Yy85In3zvlFlr1XKJzFNpLbl9lvm\n2Oh/1SV2Z5QIcTRDxtuAxxXRTQvpXC6ppJnG6t84P2rhbuRqrxqPjthORKPnOO/h\np1G8dOdbAgMBAAECggEAF6gbiF0TRk4bf/6CbMVKl6ecfWRHfokeo2+aL2wQ/olh\nSiFhMQ7FNd0oeZrqEdwZJcnNE9pf6h3qsv7dQwVTfGIe3ZyWP0WC/4Q0kC5Xu9qW\nAn9f+inVVvUlG+rCdx5bFrJ+gwcS1vfu0i4dLwm+9sSFDJT7/hzyBAEAwjmxC6ne\nOGsot7ej+cPmV/mZvvq/SyAWaNISgJfE09qAVMaIsF88kKAdUiDEa4tbNpbO75U+\nnH8/IYACz2lHeYG0tOsZ0tSZ4z6+08gKP6onUbcNMJyBow/wejTic95XON5lBtdW\nYPLHNpI5oEW9Ww/AkUnN6yuPRT2I2hhLpTE8wfS1GQKBgQDVAubG9qSvY53YbV2S\niYFk/0BC9Jt+2/AdMxBi3l9CsViZ4LYSFlKw3s6O9ZLSZCyGUJZGGpkd0Prh0Clh\nP4xABvIXmPw1ihlUb/b1FRuL2sNg0bSYpj0UI2XyDgBrHBpahIA5wVDBnsj3TbxA\nhbPs5PSvhqYf2D08OVgop4gv5QKBgQDTGrQLl4YpS7/AAHe6buiu1cgwH+e5N2QQ\nnAQAP0nDSCJFnhk4uSHDN4ptVmJPXoUJKZmWw55XEnlWUB4BXnV+QbYIKaR4vS+L\nhN7KNLLsE5KT4ys5PSWjLzh2sHK2rHjQaiNpy7nhCzTMBCm4+Dgtfj2zYvYTnFNe\nkwEXru7GPwKBgAy1XZtlP7IPGW2+KKUDeyrRZ74W5egNqyey0jlz1u8dsZGMrJAr\nsMdIo743vIi83UMuL6kDETuMKkuqpa1dozp2r57ky7dOA/DbtTouBjSz2pA+Mq4g\nzOgUrJJib3f0d0YLPbM0a2MB3C+U/bRDxdZOWqLWP7cKqaycJzxVsnRZAoGACxjL\nQBS9+6u8r6YWpRkxaAda15TFxImx2+GnoC+ze+1tx8UQxFeO+8kOoMK6tjtcuOeT\n6EXuK9uPv0bE3QOPH4zqubEesS4YsrfQUkbE5P3+ZYG6gu7A7LwNtsd9sDaOvz3l\nEKmh4r+JDfRmERATO+j361cXYl6ET2Ng2lLawFcCgYEAnTFjazjXkj3CFucNH8dI\noiQGyFcZt7ySqUFdMv+mgcJ1pFTrojpZVwgGDxzVt3PGgmt8E9X4Z3mn8hy1XBvg\nv77pB9LdhgGHttLjoC+yoxtJbiNRh96rI+025trqYdXACb7dp5AyHyqgHeAsJ3q9\nu4bR9Jfwv6zvFmK48tZfUYo=\n-----END PRIVATE KEY-----\n",
+  "client_email": "conexao-bolao-google-sheets@bolaodacopa-496702.iam.gserviceaccount.com",
+  "client_id": "110459472545016509707",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/conexao-bolao-google-sheets%40bolaodacopa-496702.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
