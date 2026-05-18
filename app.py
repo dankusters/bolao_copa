@@ -1,6 +1,7 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 from config import VERIFY_TOKEN, RECIPIENT_NUMBER
-from whatsapp import enviar_mensagem, processar_webhook
+from whatsapp.sender import enviar_template
+from whatsapp.webhook import processar_webhook
 
 app = Flask(__name__)
 
@@ -16,17 +17,22 @@ def root():
 # A Meta envia um GET para validar o webhook na configuracao
 # ============================================================
 @app.route("/webhook", methods=["GET"])
-def verificar_webhook():
-    mode = request.args.get("hub.mode")
-    token = request.args.get("hub.verify_token")
+def verify_webhook():
+    mode      = request.args.get("hub.mode")
+    token     = request.args.get("hub.verify_token")
     challenge = request.args.get("hub.challenge")
 
+    print(f"Verificação recebida → mode={mode}, token={token}")
+
     if mode == "subscribe" and token == VERIFY_TOKEN:
-        print("[OK] Webhook verificado com sucesso!")
-        return challenge, 200
-    else:
-        print("[ERRO] Falha na verificacao do webhook")
-        return "Forbidden", 403
+        print("Webhook verificado com sucesso!")
+        response = make_response(challenge, 200)
+        response.headers["Content-Type"] = "text/plain"
+        response.headers["ngrok-skip-browser-warning"] = "1"
+        return response
+
+    print("Falha na verificação do webhook.")
+    return "Forbidden", 403
 
 
 # ============================================================
@@ -45,7 +51,7 @@ def receber_mensagem():
 # ============================================================
 @app.route("/enviar", methods=["GET"])
 def enviar_teste():
-    resultado = enviar_mensagem(RECIPIENT_NUMBER, "Daniel")
+    resultado = enviar_template(RECIPIENT_NUMBER, "Daniel")
     return jsonify(resultado)
 
 
