@@ -61,9 +61,12 @@ def iniciar_aposta(numero: str):
     )
 
 
+_ETAPAS = {"aguardando_nome", "aguardando_gols_mandante", "aguardando_gols_visitante", "aguardando_confirmacao"}
+
+
 def handle_aposta(numero: str, texto: str) -> bool:
     estado = get_estado(numero)
-    if not estado:
+    if not estado or estado["etapa"] not in _ETAPAS:
         return False
 
     etapa = estado["etapa"]

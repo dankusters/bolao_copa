@@ -44,12 +44,49 @@ def apostas_existentes(nome: str, ids_jogos: list) -> list[dict]:
     ]
 
 
+COL_FORMULA_INICIO = 11  # coluna K
+COL_FORMULA_FIM = 16    # coluna P (inclusive)
+
+
 def gravar_apostas(apostas: list[dict]):
     ws = get_worksheet("bet")
     cabecalhos = ws.row_values(1)
-    for aposta in apostas:
+
+    todos_valores = ws.get_all_values()
+    template_row = len(todos_valores)  # última linha com dados antes de inserir
+
+    for i, aposta in enumerate(apostas):
         linha = [aposta.get(col, "") for col in cabecalhos]
         ws.append_row(linha)
+
+        if template_row > 1:
+            nova_linha = template_row + i + 1
+            _copiar_formulas(ws, template_row, nova_linha)
+
+
+def _copiar_formulas(ws, origem: int, destino: int):
+    ws.spreadsheet.batch_update({
+        "requests": [{
+            "copyPaste": {
+                "source": {
+                    "sheetId": ws.id,
+                    "startRowIndex": origem - 1,
+                    "endRowIndex": origem,
+                    "startColumnIndex": COL_FORMULA_INICIO - 1,
+                    "endColumnIndex": COL_FORMULA_FIM,
+                },
+                "destination": {
+                    "sheetId": ws.id,
+                    "startRowIndex": destino - 1,
+                    "endRowIndex": destino,
+                    "startColumnIndex": COL_FORMULA_INICIO - 1,
+                    "endColumnIndex": COL_FORMULA_FIM,
+                },
+                "pasteType": "PASTE_FORMULA",
+                "pasteOrientation": "NORMAL",
+            }
+        }]
+    })
 
 
 def _parse_data_hora(s: str) -> datetime | None:
