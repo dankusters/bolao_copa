@@ -1,16 +1,12 @@
-from estado import aguardando_resposta
-from whatsapp.sender import enviar_template, enviar_texto
+from handlers.aposta import handle_aposta
+from whatsapp.sender import enviar_template
 
 
 def handle_texto(numero: str, msg: dict):
     texto = msg["text"]["body"]
     print(f"[MSG] Mensagem de {numero}: {texto}")
 
-    if numero in aguardando_resposta:
-        aguardando_resposta.discard(numero)
-        if texto.strip().lower() == "rafael":
-            enviar_texto(numero, "Acertou!")
-        else:
-            enviar_texto(numero, "Errou!")
-    else:
-        enviar_template(numero, f"Recebi sua mensagem: \"{texto}\"")
+    if handle_aposta(numero, texto):
+        return
+
+    enviar_template(numero, "Olá! Use o menu abaixo para interagir com o bolão. 👇")
