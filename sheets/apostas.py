@@ -10,6 +10,14 @@ def buscar_apostador(telefone: str) -> dict | None:
     return None
 
 
+def nome_esta_cadastrado(nome: str) -> bool:
+    ws = get_worksheet("apostadores")
+    return any(
+        str(r.get("nome", "")).strip().lower() == nome.strip().lower()
+        for r in ws.get_all_records()
+    )
+
+
 def buscar_membros_familia(familia: str) -> list[str]:
     ws = get_worksheet("apostadores")
     return [

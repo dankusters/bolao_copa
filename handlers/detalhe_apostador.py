@@ -1,6 +1,7 @@
 import unicodedata
 from estado import get_estado, set_estado, limpar_estado
 from whatsapp.sender import enviar_texto
+from utils.flags import bandeira
 from sheets.detalhe_apostador import buscar_nomes_apostadores, buscar_extrato_apostador
 
 ETAPA = "aguardando_nome_apostador"
@@ -8,7 +9,7 @@ ETAPA = "aguardando_nome_apostador"
 
 def iniciar_detalhe_apostador(numero: str):
     set_estado(numero, ETAPA, {})
-    enviar_texto(numero, "Qual apostador você quer consultar? Escreva o nome:")
+    enviar_texto(numero, "Aqui você pode consultar as últimas apostas e os acertos de qualquer apostador. Escreva o nome de quem deseja ver os resultados:")
 
 
 def handle_detalhe_apostador(numero: str, texto: str) -> bool:
@@ -46,10 +47,10 @@ def handle_detalhe_apostador(numero: str, texto: str) -> bool:
         plural_pts = "ponto" if pts == 1 else "pontos"
         placar_txt = "acertou placar" if _to_int(b.get("ponto_placar", 0)) > 0 else "errou placar"
         situacao_txt = "acertou situação" if _to_int(b.get("ponto_situacao", 0)) > 0 else "errou situação"
-        linhas.append(
-            f"{mandante} {j['gols_mandante']} x {visitante} {j['gols_visitante']} "
-            f"(fez {pts} {plural_pts}, {placar_txt} e {situacao_txt})"
-        )
+        nome_m = f"{bandeira(mandante)} {mandante}".strip()
+        nome_v = f"{bandeira(visitante)} {visitante}".strip()
+        linhas.append(f"\n{nome_m} {j['gols_mandante']} x {nome_v} {j['gols_visitante']}")
+        linhas.append(f"fez {pts} {plural_pts}, {placar_txt} e {situacao_txt}")
 
     linhas.append(f"\nTotal de pontos até última atualização: {total}")
     enviar_texto(numero, "\n".join(linhas))

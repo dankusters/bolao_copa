@@ -1,4 +1,6 @@
+from datetime import datetime
 from sheets.client import get_worksheet
+from sheets.apostas import _parse_data_hora
 
 
 def buscar_nomes_apostadores() -> list[str]:
@@ -35,4 +37,5 @@ def buscar_extrato_apostador(nome: str) -> list[dict]:
             continue
         resultado.append({"bet": b, "jogo": jogo})
 
+    resultado.sort(key=lambda x: _parse_data_hora(str(x["jogo"].get("data_hora", ""))) or datetime.min)
     return resultado

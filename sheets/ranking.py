@@ -1,18 +1,32 @@
 from sheets.client import get_worksheet
 from sheets.apostas import _parse_data_hora
 
+_DIVISOR_FAMILIA: dict[str, int] = {
+    "Camargo-Marques": 4,
+    "Camargo-Kusters": 4,
+    "Camargo-Camargo": 3,
+    "Camargo-Lamunier": 2,
+}
+
 
 def buscar_ranking_familia() -> tuple[list[dict], dict | None]:
     ultima_atualizacao = _ultimo_jogo_atualizado()
 
+    ws_apostadores = get_worksheet("apostadores")
+    familias = list({
+        str(r.get("família", "")).strip()
+        for r in ws_apostadores.get_all_records()
+        if str(r.get("família", "")).strip()
+    })
+
     ws_bet = get_worksheet("bet")
     bets = ws_bet.get_all_records()
 
-    stats: dict[str, dict] = {}
+    stats: dict[str, dict] = {f: {"pontos": 0, "placar_mosca": 0, "resultado": 0} for f in familias}
 
     for b in bets:
         familia = str(b.get("família", "")).strip()
-        if not familia:
+        if not familia or familia.startswith("#"):
             continue
         if familia not in stats:
             stats[familia] = {"pontos": 0, "placar_mosca": 0, "resultado": 0}
@@ -21,6 +35,11 @@ def buscar_ranking_familia() -> tuple[list[dict], dict | None]:
             stats[familia]["placar_mosca"] += 1
         if _to_int(b.get("ponto_situacao", 0)) > 0:
             stats[familia]["resultado"] += 1
+
+    for familia, dados in stats.items():
+        divisor = _DIVISOR_FAMILIA.get(familia, 1)
+        total = dados["pontos"]
+        dados["pontos"] = round(total / divisor, 2) if total and divisor else 0
 
     ranking = [{"nome": familia, **dados} for familia, dados in stats.items()]
     ranking.sort(key=lambda x: x["pontos"], reverse=True)

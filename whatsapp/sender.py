@@ -18,7 +18,7 @@ def enviar_template(numero_destino: str):
                 {
                     "type": "header",
                     "parameters": [
-                        {"type": "image", "image": {"link": "https://placehold.co/400x400/png"}}
+                        {"type": "image", "image": {"link": "https://i.imgur.com/pXNmejn.jpeg"}}
                     ],
                 },
             ],

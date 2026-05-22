@@ -1,19 +1,21 @@
 from datetime import datetime
 from estado import get_estado, set_estado, limpar_estado
 from whatsapp.sender import enviar_texto, enviar_template
+from utils.flags import bandeira
 from sheets.apostas import (
     buscar_apostador,
     buscar_membros_familia,
     buscar_jogos_hoje,
     apostas_existentes,
     gravar_apostas,
+    nome_esta_cadastrado,
 )
 
 
 def iniciar_aposta(numero: str):
     agora = datetime.now()
     if agora.hour >= 23 and agora.minute >= 59:  # TODO: restaurar para hour >= 12 no deploy
-        enviar_texto(numero, "Já passou das 12:00, não dá mais para apostar. Aguarde até amanhã!")
+        enviar_texto(numero, "Apressadinho(a)! As apostas só são aceitas até as 23:59. Aguarde até amanhã! 😅")
         return
 
     jogos_hoje = buscar_jogos_hoje()
@@ -33,10 +35,14 @@ def iniciar_aposta(numero: str):
 
     count = len(jogos_hoje)
     plural = "jogo" if count == 1 else "jogos"
-    jogos_str = "; ".join(
-        f"{j['mandante_x_visitante']} às {_extrair_hora(str(j['data_hora']))}"
+    data_hoje = agora.strftime("%d/%m")
+
+    jogos_lista = [
+        f"{bandeira(j['time_mandante'])} {j['time_mandante']} x {bandeira(j['time_visitante'])} {j['time_visitante']} às {_extrair_hora(str(j['data_hora']))}"
         for j in jogos_hoje
-    )
+    ]
+    jogos_lista[-1] += "."
+    jogos_linhas = "\n".join(jogos_lista)
 
     aviso = (
         f" Lembre-se que você só pode fazer uma aposta para você ou para "
@@ -55,9 +61,10 @@ def iniciar_aposta(numero: str):
 
     enviar_texto(
         numero,
-        f"Hoje teremos {count} {plural}: {jogos_str}.\n\n"
-        f"Olá, {nome}! Escreva o nome para quem você vai fazer a aposta. "
-        f"Se for você mesmo, coloque seu nome.{aviso}",
+        f"Olá, {nome}!\n\n"
+        f"Hoje, {data_hoje}, teremos {count} {plural}:\n\n"
+        f"{jogos_linhas}\n\n"
+        f"Escreva o nome para quem você vai fazer a aposta. Se for você mesmo, coloque o seu nome.\n\n{aviso}",
     )
 
 
@@ -90,8 +97,12 @@ def _handle_nome(numero: str, nome_digitado: str, dados: dict):
     match = next((m for m in membros if m.strip().lower() == nome_digitado.lower()), None)
 
     if not match:
-        enviar_texto(numero, "Sorry, espertinho(a), você não pode apostar por esta pessoa. 😅")
+        if nome_esta_cadastrado(nome_digitado):
+            enviar_texto(numero, "Sorry, espertinho(a), você não pode apostar por esta pessoa. 😅")
+        else:
+            enviar_texto(numero, "Não encontrei ninguém cadastrado com esse nome. Tente novamente.")
         limpar_estado(numero)
+        enviar_template(numero)
         return
 
     jogos_hoje = dados["jogos_hoje"]
@@ -115,11 +126,12 @@ def _perguntar_gols_mandante(numero: str, dados: dict):
     idx = dados["jogo_atual_idx"]
     total = len(dados["jogos_hoje"])
     jogo = dados["jogos_hoje"][idx]
+    mandante = jogo["time_mandante"]
+    visitante = jogo["time_visitante"]
     enviar_texto(
         numero,
-        f"Jogo {idx + 1}/{total}: {jogo['mandante_x_visitante']} "
-        f"às {_extrair_hora(str(jogo['data_hora']))}\n"
-        f"Quantos gols *{jogo['time_mandante']}* irá marcar?",
+        f"Jogo {idx + 1}/{total}: {bandeira(mandante)} {mandante} x {bandeira(visitante)} {visitante}\n"
+        f"Quantos gols o {bandeira(mandante)} {mandante} irá marcar?",
     )
 
 
@@ -136,7 +148,8 @@ def _handle_gols_mandante(numero: str, texto: str, dados: dict):
     dados["gols_mandante_temp"] = gols
     set_estado(numero, "aguardando_gols_visitante", dados)
     jogo = dados["jogos_hoje"][dados["jogo_atual_idx"]]
-    enviar_texto(numero, f"Quantos gols *{jogo['time_visitante']}* irá marcar?")
+    visitante = jogo["time_visitante"]
+    enviar_texto(numero, f"Quantos gols o {bandeira(visitante)} {visitante} irá marcar?")
 
 
 def _handle_gols_visitante(numero: str, texto: str, dados: dict):
@@ -147,7 +160,8 @@ def _handle_gols_visitante(numero: str, texto: str, dados: dict):
             "Escreva números inteiros! Texto ou qualquer número maior que 10 não são permitidos, comece de novo.",
         )
         jogo = dados["jogos_hoje"][dados["jogo_atual_idx"]]
-        enviar_texto(numero, f"Quantos gols *{jogo['time_visitante']}* irá marcar?")
+        visitante = jogo["time_visitante"]
+        enviar_texto(numero, f"Quantos gols o {bandeira(visitante)} {visitante} irá marcar?")
         return
 
     jogo = dados["jogos_hoje"][dados["jogo_atual_idx"]]

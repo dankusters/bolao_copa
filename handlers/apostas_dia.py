@@ -1,4 +1,3 @@
-from datetime import datetime
 from whatsapp.sender import enviar_texto
 from sheets.detalhe_jogo import buscar_apostas_do_dia
 from sheets.apostas import _parse_data_hora
@@ -6,9 +5,10 @@ from utils.flags import bandeira
 
 
 def handle_apostas_dia(numero: str):
-    if datetime.now().hour < 12:
-        enviar_texto(numero, "Apressadinho(a), as apostas só são reveladas depois das 12:00.")
-        return
+    # TODO: no deploy, descomentar o bloco abaixo
+    # if datetime.now().hour < 12:
+    #     enviar_texto(numero, "Apressadinho(a), as apostas só são reveladas depois das 12:00.")
+    #     return
 
     detalhes = buscar_apostas_do_dia()
 
