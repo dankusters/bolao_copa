@@ -44,8 +44,8 @@ def apostas_existentes(nome: str, ids_jogos: list) -> list[dict]:
     ]
 
 
-COL_FORMULA_INICIO = 11  # coluna K
-COL_FORMULA_FIM = 16    # coluna P (inclusive)
+COL_FORMULA_INICIO = 10  # coluna J
+COL_FORMULA_FIM = 17    # coluna Q (inclusive)
 
 
 def gravar_apostas(apostas: list[dict]):

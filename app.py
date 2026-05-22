@@ -51,7 +51,7 @@ def receber_mensagem():
 # ============================================================
 @app.route("/enviar", methods=["GET"])
 def enviar_teste():
-    resultado = enviar_template(RECIPIENT_NUMBER, "Daniel")
+    resultado = enviar_template(RECIPIENT_NUMBER)
     return jsonify(resultado)
 
 

@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Estado de sessão do bot (gerado em runtime)
+.estado.json

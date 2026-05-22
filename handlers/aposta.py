@@ -187,6 +187,7 @@ def _handle_confirmacao(numero: str, texto: str, dados: dict):
             {
                 "bet_date": now_str,
                 "nome": nome,
+                "família": dados["apostador_familia"],
                 "id_jogo": a["id_jogo"],
                 "time_mandante": a["time_mandante"],
                 "time_visitante": a["time_visitante"],
@@ -207,7 +208,7 @@ def _handle_confirmacao(numero: str, texto: str, dados: dict):
     else:
         limpar_estado(numero)
         enviar_texto(numero, "Vamos começar tudo de novo!")
-        enviar_template(numero, "Olá! Use o menu abaixo para interagir com o bolão. 👇")
+        enviar_template(numero)
 
 
 def _validar_gols(texto: str) -> int | None:

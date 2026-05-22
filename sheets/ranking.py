@@ -2,6 +2,32 @@ from sheets.client import get_worksheet
 from sheets.apostas import _parse_data_hora
 
 
+def buscar_ranking_familia() -> tuple[list[dict], dict | None]:
+    ultima_atualizacao = _ultimo_jogo_atualizado()
+
+    ws_bet = get_worksheet("bet")
+    bets = ws_bet.get_all_records()
+
+    stats: dict[str, dict] = {}
+
+    for b in bets:
+        familia = str(b.get("família", "")).strip()
+        if not familia:
+            continue
+        if familia not in stats:
+            stats[familia] = {"pontos": 0, "placar_mosca": 0, "resultado": 0}
+        stats[familia]["pontos"] += _to_int(b.get("pontos_totais", 0))
+        if _to_int(b.get("ponto_placar", 0)) > 0:
+            stats[familia]["placar_mosca"] += 1
+        if _to_int(b.get("ponto_situacao", 0)) > 0:
+            stats[familia]["resultado"] += 1
+
+    ranking = [{"nome": familia, **dados} for familia, dados in stats.items()]
+    ranking.sort(key=lambda x: x["pontos"], reverse=True)
+
+    return ranking, ultima_atualizacao
+
+
 def buscar_ranking() -> tuple[list[dict], dict | None]:
     ultima_atualizacao = _ultimo_jogo_atualizado()
 

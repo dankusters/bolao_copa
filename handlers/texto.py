@@ -12,4 +12,4 @@ def handle_texto(numero: str, msg: dict):
     if handle_detalhe_apostador(numero, texto):
         return
 
-    enviar_template(numero, "Olá! Use o menu abaixo para interagir com o bolão. 👇")
+    enviar_template(numero)

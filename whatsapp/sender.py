@@ -2,7 +2,7 @@ import requests
 from config import ACCESS_TOKEN, API_URL
 
 
-def enviar_template(numero_destino: str, texto: str):
+def enviar_template(numero_destino: str):
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}",
         "Content-Type": "application/json",
@@ -12,18 +12,14 @@ def enviar_template(numero_destino: str, texto: str):
         "to": numero_destino,
         "type": "template",
         "template": {
-            "name": "main_bolao",
-            "language": {"code": "pt_BR"},
+            "name": "bolao_camargo",
+            "language": {"code": "en"},
             "components": [
                 {
                     "type": "header",
                     "parameters": [
                         {"type": "image", "image": {"link": "https://placehold.co/400x400/png"}}
                     ],
-                },
-                {
-                    "type": "body",
-                    "parameters": [{"type": "text", "text": texto}],
                 },
             ],
         },

@@ -1,5 +1,5 @@
 from whatsapp.sender import enviar_texto
-from sheets.ranking import buscar_ranking
+from sheets.ranking import buscar_ranking, buscar_ranking_familia
 from sheets.apostas import _parse_data_hora
 
 
@@ -14,6 +14,21 @@ def _formatar_ultimo_jogo(jogo: dict) -> str:
     nome_jogo = jogo.get("mandante_x_visitante", "")
     sufixo = f" do dia {data}" if data else ""
     return f"Último jogo atualizado: {nome_jogo} das {hora}{sufixo}. Aguarde atualizações"
+
+
+def handle_ranking_familia(numero: str):
+    ranking, ultima_atualizacao = buscar_ranking_familia()
+
+    if ultima_atualizacao:
+        cabecalho = _formatar_ultimo_jogo(ultima_atualizacao) + "\n"
+    else:
+        cabecalho = "Nenhum jogo encerrado ainda.\n"
+
+    linhas = [cabecalho, "*Ranking por Família:*\n"]
+    for i, r in enumerate(ranking, 1):
+        linhas.append(f"{i}. {r['nome']} - {_formatar_linha(r)}")
+
+    enviar_texto(numero, "\n".join(linhas))
 
 
 def handle_ranking(numero: str):
