@@ -12,6 +12,7 @@ def handle_apostas_dia(numero: str):
         enviar_cta(numero)
         return
 
+    enviar_texto(numero, "Atualizando apostas, aguarde um instante... ⏳")
     gerar_apostas_automaticas()
 
     detalhes = buscar_apostas_do_dia()
