@@ -130,7 +130,7 @@ def buscar_jogos_finalizados_hoje() -> list[dict]:
     params = {"dateFrom": hoje, "dateTo": hoje, "status": "FINISHED"}
 
     try:
-        resp = requests.get(url, headers=headers, params=params, timeout=10)
+        resp = requests.get(url, headers=headers, params=params, timeout=30)
     except requests.RequestException as e:
         print(f"[ERRO] Falha na requisição: {e}")
         return []
