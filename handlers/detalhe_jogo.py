@@ -34,7 +34,7 @@ def handle_detalhe_jogo(numero: str):
                 gv_a = a.get("gols_visitante", "")
                 pts = _to_int(a.get("pontos_totais", 0))
                 plural = "ponto" if pts == 1 else "pontos"
-                linhas.append(f"- {nome} apostou {flag_m} {mandante} {gm_a} x {gv_a} {visitante} {flag_v} ({pts} {plural})")
+                linhas.append(f"- {nome} apostou {mandante} {gm_a} x {gv_a} {visitante} ({pts} {plural})")
 
         linhas.append("")
 
