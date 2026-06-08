@@ -3,7 +3,7 @@ from sheets.client import get_worksheet
 from sheets.apostas import _parse_data_hora
 
 
-def buscar_calendario(dias_passados: int = 3, dias_futuros: int = 7) -> list[dict]:
+def buscar_calendario(dias_passados: int = 0, dias_futuros: int = 2) -> list[dict]:
     """Retorna jogos do período [-dias_passados, +dias_futuros] ordenados por data_hora."""
     ws = get_worksheet("jogos")
     hoje = date.today()

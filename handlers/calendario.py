@@ -14,7 +14,7 @@ def handle_calendario(numero: str):
         return
 
     hoje = date.today()
-    blocos = ["📅 *Calendário de Jogos*\n"]
+    blocos = ["📅 *Jogos de hoje e dos próximos dois dias*\n"]
     data_atual = None
 
     for jogo in jogos:
