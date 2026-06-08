@@ -27,6 +27,10 @@ uv run python -c "from sheets.aposta_automatica import gerar_apostas_automaticas
 # Ver logs da VPS
 ssh -i ~/.ssh/bolao_deploy deploy@2.25.131.88 "journalctl -u bolao --no-pager -n 50"
 ssh -i ~/.ssh/bolao_deploy deploy@2.25.131.88 "tail -20 /home/deploy/bolao_apostas.log"
+ssh -i ~/.ssh/bolao_deploy deploy@2.25.131.88 "tail -20 /home/deploy/bolao_resultados.log"
+
+# Testar atualização de resultados manualmente
+uv run python scripts/atualizar_resultados.py
 ```
 
 ## Arquitetura
@@ -44,6 +48,7 @@ Meta → POST /webhook → processar_webhook() → handler por tipo → sender
 **`whatsapp/sender.py`** centraliza os envios:
 - `enviar_template(numero, texto)` — envia o template `main_bolao` (com imagem no header e texto no body)
 - `enviar_texto(numero, texto)` — envia mensagem de texto livre (só válida dentro da janela de 24h após o usuário interagir)
+- `enviar_cta(numero)` — envia mensagem padrão de call-to-action ("Digite qualquer texto para voltar ao menu inicial"). Deve ser chamada ao final de todo handler que encerra o fluxo sem enviar o template.
 
 **`estado.py`** mantém `aguardando_resposta: set[str]` em memória — o conjunto de números de telefone que aguardam a próxima mensagem do usuário para uma resposta contextual. **Este estado é perdido ao reiniciar o servidor.**
 
@@ -53,13 +58,18 @@ Meta → POST /webhook → processar_webhook() → handler por tipo → sender
 
 **`scripts/apostas_automaticas.py`** script standalone chamado pelo cron no VPS às 15:00 UTC (12:00 Brasília). Também é chamado inline pelo handler `apostas_dia` ao primeiro acesso após as 12:00, eliminando condição de corrida com o cron.
 
+**`scripts/atualizar_resultados.py`** script standalone que consulta a API `football-data.org` (competição `WC`) e atualiza `gols_mandante`/`gols_visitante` na aba `jogos` para jogos finalizados no dia. Requer `FOOTBALL_DATA_TOKEN` no `.env`. Completamente isolado — para remover, basta apagar o arquivo, remover a entrada do crontab e a variável do `.env`. O dicionário `NOMES_TIMES` dentro do script mapeia nomes em inglês (API) para português (planilha) — se aparecer `[MISS]` nos logs, adicionar a entrada faltante lá.
+
+**`handlers/calendario.py`** + **`sheets/calendario.py`** exibem jogos de hoje e dos próximos dois dias com horário ou placar (se já encerrado), acionados pelo botão "Ver calendário de jogos e resultados".
+
 ## Variáveis de ambiente (`.env`)
 
 ```
-ACCESS_TOKEN=       # Token temporário da Meta (expira em 24h — renovar no painel da Meta)
-PHONE_NUMBER_ID=    # ID do número de telefone no painel da Meta
-VERIFY_TOKEN=       # String livre usada para validar o webhook na Meta
-RECIPIENT_NUMBER=   # Número de teste (formato: 5511999999999)
+ACCESS_TOKEN=           # Token temporário da Meta (expira em 24h — renovar no painel da Meta)
+PHONE_NUMBER_ID=        # ID do número de telefone no painel da Meta
+VERIFY_TOKEN=           # String livre usada para validar o webhook na Meta
+RECIPIENT_NUMBER=       # Número de teste (formato: 5511999999999)
+FOOTBALL_DATA_TOKEN=    # Token da API football-data.org (gratuito, não expira)
 ```
 
 ## Credenciais Google Sheets
@@ -106,11 +116,16 @@ O `authorized_keys` da VPS aceita múltiplas chaves (uma por linha). Cada máqui
 O secret `VPS_SSH_KEY` no GitHub (usado pelo CI/CD) é independente das chaves locais — não alterar ao adicionar nova máquina.
 
 ### Cron no VPS
-Apostas automáticas configuradas no crontab do usuário `deploy`:
+Crontab do usuário `deploy` (ver/editar com `crontab -e` na VPS):
 ```
+# Apostas automáticas — 15:00 UTC = 12:00 Brasília
 0 15 * * * cd /home/deploy/bolao_copa && uv run python scripts/apostas_automaticas.py >> /home/deploy/bolao_apostas.log 2>&1
+
+# Atualização de resultados — a cada 5 min entre 15h-02h UTC (12h-23h Brasília)
+*/5 15-23,0-2 * * * cd /home/deploy/bolao_copa && ~/.local/bin/uv run python scripts/atualizar_resultados.py >> /home/deploy/bolao_resultados.log 2>&1
 ```
-15:00 UTC = 12:00 Brasília. Ver/editar com `crontab -e` na VPS.
+
+Logs de resultados: `tail -20 /home/deploy/bolao_resultados.log`
 
 ## Pontos de atenção
 
@@ -120,3 +135,5 @@ Apostas automáticas configuradas no crontab do usuário `deploy`:
 - `COL_FORMULA_INICIO` em `sheets/apostas.py` deve apontar para a primeira coluna com fórmula na aba `bet`. Atualmente é 11 (coluna K = `situacao`). Se adicionar/remover colunas antes dessa posição, atualizar a constante.
 - Para adicionar um novo tipo de mensagem recebida (ex: `interactive`, `location`), criar `handlers/novo_tipo.py` e registrar em `whatsapp/webhook.py`.
 - Para adicionar um novo tipo de envio, adicionar função em `whatsapp/sender.py`.
+- Todo handler que encerra o fluxo sem chamar `enviar_template()` deve chamar `enviar_cta()` ao final — padrão estabelecido em todos os handlers existentes.
+- Se `atualizar_resultados.py` logar `[MISS]` para algum time, adicionar a entrada no dicionário `NOMES_TIMES` dentro do próprio script. O `[MISS]` indica que o nome em inglês da API não tem correspondência em português para atualizar a planilha.
