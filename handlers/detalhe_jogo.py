@@ -1,4 +1,4 @@
-from whatsapp.sender import enviar_texto
+from whatsapp.sender import enviar_texto, enviar_cta
 from sheets.detalhe_jogo import buscar_detalhe_por_jogo
 
 
@@ -7,6 +7,7 @@ def handle_detalhe_jogo(numero: str):
 
     if not detalhes:
         enviar_texto(numero, "Nenhum jogo do dia atualizado ainda. Aguarde! ⏳")
+        enviar_cta(numero)
         return
 
     linhas = ["*Jogos já atualizados:*\n"]
@@ -34,6 +35,7 @@ def handle_detalhe_jogo(numero: str):
         linhas.append("")
 
     enviar_texto(numero, "\n".join(linhas).strip())
+    enviar_cta(numero)
 
 
 def _to_int(val) -> int:

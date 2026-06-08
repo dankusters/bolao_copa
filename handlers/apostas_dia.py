@@ -1,5 +1,5 @@
 from datetime import datetime
-from whatsapp.sender import enviar_texto
+from whatsapp.sender import enviar_texto, enviar_cta
 from sheets.detalhe_jogo import buscar_apostas_do_dia
 from sheets.apostas import _parse_data_hora
 from sheets.aposta_automatica import gerar_apostas_automaticas
@@ -9,6 +9,7 @@ from utils.flags import bandeira
 def handle_apostas_dia(numero: str):
     if datetime.now().hour < 12:
         enviar_texto(numero, "Apressadinho(a), as apostas só são reveladas depois das 12:00.")
+        enviar_cta(numero)
         return
 
     gerar_apostas_automaticas()
@@ -17,6 +18,7 @@ def handle_apostas_dia(numero: str):
 
     if not detalhes:
         enviar_texto(numero, "Hoje não há jogos programados.")
+        enviar_cta(numero)
         return
 
     blocos = []
@@ -45,3 +47,4 @@ def handle_apostas_dia(numero: str):
         blocos.append("\n".join(linhas))
 
     enviar_texto(numero, "\n\n".join(blocos))
+    enviar_cta(numero)

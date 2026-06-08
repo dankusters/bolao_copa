@@ -1,6 +1,6 @@
 from datetime import datetime
 from estado import get_estado, set_estado, limpar_estado
-from whatsapp.sender import enviar_texto, enviar_template
+from whatsapp.sender import enviar_texto, enviar_template, enviar_cta
 from utils.flags import bandeira
 from sheets.apostas import (
     buscar_apostador,
@@ -16,16 +16,19 @@ def iniciar_aposta(numero: str):
     agora = datetime.now()
     if agora.hour >= 23 and agora.minute >= 59:  # TODO: restaurar para hour >= 12 no deploy
         enviar_texto(numero, "Apressadinho(a)! As apostas só são aceitas até as 23:59. Aguarde até amanhã! 😅")
+        enviar_cta(numero)
         return
 
     jogos_hoje = buscar_jogos_hoje()
     if not jogos_hoje:
         enviar_texto(numero, "Hoje não temos jogos da Copa! Aguarde! ⚽")
+        enviar_cta(numero)
         return
 
     apostador = buscar_apostador(numero)
     if not apostador:
         enviar_texto(numero, "Você não é cadastrado, sorry! Tchau 👋")
+        enviar_cta(numero)
         return
 
     nome = apostador["nome"]
@@ -112,6 +115,7 @@ def _handle_nome(numero: str, nome_digitado: str, dados: dict):
     if bets:
         enviar_texto(numero, f"{match} já fez aposta hoje! Sorry! 😅")
         limpar_estado(numero)
+        enviar_cta(numero)
         return
 
     dados["nome_para_aposta"] = match
@@ -219,6 +223,7 @@ def _handle_confirmacao(numero: str, texto: str, dados: dict):
         gravar_apostas(rows)
         limpar_estado(numero)
         enviar_texto(numero, f"Apostas de *{nome}* registradas com sucesso! Boa sorte! 🏆")
+        enviar_cta(numero)
     else:
         limpar_estado(numero)
         enviar_texto(numero, "Vamos começar tudo de novo!")

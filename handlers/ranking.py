@@ -1,4 +1,4 @@
-from whatsapp.sender import enviar_texto
+from whatsapp.sender import enviar_texto, enviar_cta
 from sheets.ranking import buscar_ranking, buscar_ranking_familia
 from sheets.apostas import _parse_data_hora
 from utils.flags import bandeira
@@ -32,6 +32,7 @@ def handle_ranking_familia(numero: str):
         linhas.append(f"{i}. {r['nome']} - {_formatar_linha(r)}")
 
     enviar_texto(numero, "\n".join(linhas))
+    enviar_cta(numero)
 
 
 def handle_ranking(numero: str):
@@ -60,6 +61,7 @@ def handle_ranking(numero: str):
         linhas.append("")
 
     enviar_texto(numero, "\n".join(linhas))
+    enviar_cta(numero)
 
 
 def _formatar_linha(r: dict) -> str:

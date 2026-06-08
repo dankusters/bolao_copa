@@ -32,6 +32,10 @@ def enviar_template(numero_destino: str):
     return response.json()
 
 
+def enviar_cta(numero_destino: str):
+    enviar_texto(numero_destino, "_Digite qualquer texto para voltar ao menu inicial._")
+
+
 def enviar_texto(numero_destino: str, texto: str):
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}",

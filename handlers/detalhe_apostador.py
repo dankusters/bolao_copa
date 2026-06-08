@@ -1,6 +1,6 @@
 import unicodedata
 from estado import get_estado, set_estado, limpar_estado
-from whatsapp.sender import enviar_texto
+from whatsapp.sender import enviar_texto, enviar_cta
 from utils.flags import bandeira
 from sheets.detalhe_apostador import buscar_nomes_apostadores, buscar_extrato_apostador
 
@@ -23,12 +23,14 @@ def handle_detalhe_apostador(numero: str, texto: str) -> bool:
 
     if not match:
         enviar_texto(numero, "Esse nome não foi encontrado. Tente novamente clicando no botão.")
+        enviar_cta(numero)
         return True
 
     extrato = buscar_extrato_apostador(match)
 
     if not extrato:
         enviar_texto(numero, f"{match} ainda não tem apostas em jogos atualizados.")
+        enviar_cta(numero)
         return True
 
     total = sum(_to_int(item["bet"].get("pontos_totais", 0)) for item in extrato)
@@ -54,6 +56,7 @@ def handle_detalhe_apostador(numero: str, texto: str) -> bool:
 
     linhas.append(f"\nTotal de pontos até última atualização: {total}")
     enviar_texto(numero, "\n".join(linhas))
+    enviar_cta(numero)
     return True
 
 

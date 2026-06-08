@@ -1,5 +1,5 @@
 from datetime import date
-from whatsapp.sender import enviar_texto
+from whatsapp.sender import enviar_texto, enviar_cta
 from sheets.calendario import buscar_calendario
 from utils.flags import bandeira
 
@@ -11,6 +11,7 @@ def handle_calendario(numero: str):
 
     if not jogos:
         enviar_texto(numero, "Nenhum jogo encontrado nos próximos dias.")
+        enviar_cta(numero)
         return
 
     hoje = date.today()
@@ -48,3 +49,4 @@ def handle_calendario(numero: str):
         blocos.append(linha)
 
     enviar_texto(numero, "\n".join(blocos))
+    enviar_cta(numero)
