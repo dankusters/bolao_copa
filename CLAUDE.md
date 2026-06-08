@@ -58,6 +58,43 @@ RECIPIENT_NUMBER=   # Número de teste (formato: 5511999999999)
 
 O arquivo `sheets/bolaodacopa-496702-2ad378872f88.json` (conta de serviço) deve estar dentro da pasta `sheets/`. Não é versionado. Para obter: Google Cloud Console → conta de serviço → baixar chave JSON → compartilhar a planilha com o e-mail da conta de serviço.
 
+## Deploy (VPS Hostinger)
+
+O servidor de produção é um VPS na Hostinger:
+- **IP:** `2.25.131.88`
+- **Domínio:** `https://bolaodoscamargos.shop`
+- **Usuário deploy:** `deploy` em `/home/deploy/bolao_copa`
+- **Webhook Meta:** `https://bolaodoscamargos.shop/webhook`
+
+### Stack de produção
+- **gunicorn** serve o Flask app (2 workers, porta 5000)
+- **nginx** faz reverse proxy para o gunicorn
+- **systemd** mantém o serviço `bolao` sempre ativo (`sudo systemctl restart bolao`)
+- **Let's Encrypt** gerencia o SSL (renovação automática via certbot)
+
+### Deploy automático
+Qualquer push na branch `main` dispara o workflow `.github/workflows/deploy.yml` via GitHub Actions, que:
+1. SSH no VPS como `deploy`
+2. `git pull origin main`
+3. `uv sync --frozen`
+4. `sudo systemctl restart bolao`
+
+### Arquivos sensíveis no VPS (não versionados)
+Estes arquivos existem apenas no VPS e na máquina local — nunca no git:
+- `/home/deploy/bolao_copa/.env`
+- `/home/deploy/bolao_copa/sheets/bolaodacopa-496702-3b6367a7a6b9.json`
+
+Para copiar da máquina local para o VPS:
+```bash
+scp .env deploy@2.25.131.88:/home/deploy/bolao_copa/.env
+scp sheets/bolaodacopa-496702-3b6367a7a6b9.json deploy@2.25.131.88:/home/deploy/bolao_copa/sheets/
+```
+
+### SSH key do GitHub Actions
+A chave privada está em `~/.ssh/bolao_deploy` na máquina de desenvolvimento.
+A chave pública está em `~/.ssh/bolao_deploy.pub` e no `~/.ssh/authorized_keys` do VPS.
+O secret `VPS_SSH_KEY` no GitHub contém a chave privada.
+
 ## Pontos de atenção
 
 - O `ACCESS_TOKEN` da Meta expira em 24h em ambiente de teste. Sintoma: erro `401 OAuthException code 190` nos logs.
