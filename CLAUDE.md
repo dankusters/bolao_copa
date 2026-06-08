@@ -12,17 +12,21 @@ Bot de bolão da Copa do Mundo via WhatsApp, usando Meta Cloud API + Flask + Goo
 # Instalar dependências
 uv sync
 
-# Rodar o servidor Flask
+# Rodar o servidor Flask (desenvolvimento local)
 uv run python app.py
-
-# Expor localmente via ngrok (terminal separado)
-ngrok http 5000
 
 # Verificar planilha Google Sheets
 uv run python sheets/teste_gsheets.py
 
 # Listar templates WhatsApp disponíveis
 uv run python check_templates.py
+
+# Gerar apostas automáticas manualmente (sem trava de horário)
+uv run python -c "from sheets.aposta_automatica import gerar_apostas_automaticas; print(gerar_apostas_automaticas())"
+
+# Ver logs da VPS
+ssh -i ~/.ssh/bolao_deploy deploy@2.25.131.88 "journalctl -u bolao --no-pager -n 50"
+ssh -i ~/.ssh/bolao_deploy deploy@2.25.131.88 "tail -20 /home/deploy/bolao_apostas.log"
 ```
 
 ## Arquitetura
@@ -45,6 +49,10 @@ Meta → POST /webhook → processar_webhook() → handler por tipo → sender
 
 **`sheets/client.py`** expõe `get_worksheet(nome)` para acessar abas da planilha `tabela_copa`. Abas disponíveis: `jogos`, `bet`, `apostadores`. O ID da planilha está hardcoded na constante `FOLDER_ID`.
 
+**`sheets/aposta_automatica.py`** gera apostas aleatórias para apostadores que não apostaram até as 12:00. A função `gerar_apostas_automaticas()` é idempotente — verifica `apostas_existentes` antes de criar, nunca duplica. As probabilidades são configuradas em `REGRAS_PLACAR` (máx 4 gols, sendo 4 com 5% de chance). Apostas automáticas são marcadas com `origem = "auto"` na aba `bet`.
+
+**`scripts/apostas_automaticas.py`** script standalone chamado pelo cron no VPS às 15:00 UTC (12:00 Brasília). Também é chamado inline pelo handler `apostas_dia` ao primeiro acesso após as 12:00, eliminando condição de corrida com o cron.
+
 ## Variáveis de ambiente (`.env`)
 
 ```
@@ -56,7 +64,9 @@ RECIPIENT_NUMBER=   # Número de teste (formato: 5511999999999)
 
 ## Credenciais Google Sheets
 
-O arquivo `sheets/bolaodacopa-496702-2ad378872f88.json` (conta de serviço) deve estar dentro da pasta `sheets/`. Não é versionado. Para obter: Google Cloud Console → conta de serviço → baixar chave JSON → compartilhar a planilha com o e-mail da conta de serviço.
+O arquivo de credenciais (conta de serviço) deve estar dentro da pasta `sheets/`. Não é versionado. O nome exato do arquivo está definido em `sheets/client.py` na constante `CREDENTIALS_FILE` — atualizar quando gerar uma nova chave.
+
+Para obter: Google Cloud Console → projeto `bolaodacopa-496702` → IAM e administrador → Contas de serviço → Chaves → Adicionar chave → JSON. Após baixar, copiar para `sheets/` e atualizar `CREDENTIALS_FILE` em `client.py`. Copiar também para a VPS via `scp` (ver seção abaixo).
 
 ## Deploy (VPS Hostinger)
 
@@ -80,24 +90,33 @@ Qualquer push na branch `main` dispara o workflow `.github/workflows/deploy.yml`
 4. `sudo systemctl restart bolao`
 
 ### Arquivos sensíveis no VPS (não versionados)
-Estes arquivos existem apenas no VPS e na máquina local — nunca no git:
+Estes arquivos existem apenas no VPS e nas máquinas locais — nunca no git:
 - `/home/deploy/bolao_copa/.env`
-- `/home/deploy/bolao_copa/sheets/bolaodacopa-496702-3b6367a7a6b9.json`
+- `/home/deploy/bolao_copa/sheets/bolaodacopa-496702-*.json` (credenciais Google)
 
 Para copiar da máquina local para o VPS:
 ```bash
-scp .env deploy@2.25.131.88:/home/deploy/bolao_copa/.env
-scp sheets/bolaodacopa-496702-3b6367a7a6b9.json deploy@2.25.131.88:/home/deploy/bolao_copa/sheets/
+scp -i ~/.ssh/bolao_deploy .env deploy@2.25.131.88:/home/deploy/bolao_copa/.env
+scp -i ~/.ssh/bolao_deploy sheets/bolaodacopa-496702-*.json deploy@2.25.131.88:/home/deploy/bolao_copa/sheets/
 ```
 
-### SSH key do GitHub Actions
-A chave privada está em `~/.ssh/bolao_deploy` na máquina de desenvolvimento.
-A chave pública está em `~/.ssh/bolao_deploy.pub` e no `~/.ssh/authorized_keys` do VPS.
-O secret `VPS_SSH_KEY` no GitHub contém a chave privada.
+### SSH — múltiplas máquinas de desenvolvimento
+O `authorized_keys` da VPS aceita múltiplas chaves (uma por linha). Cada máquina de desenvolvimento pode ter sua própria chave `~/.ssh/bolao_deploy` adicionada via painel da Hostinger (hpanel.hostinger.com → VPS → Terminal).
+
+O secret `VPS_SSH_KEY` no GitHub (usado pelo CI/CD) é independente das chaves locais — não alterar ao adicionar nova máquina.
+
+### Cron no VPS
+Apostas automáticas configuradas no crontab do usuário `deploy`:
+```
+0 15 * * * cd /home/deploy/bolao_copa && uv run python scripts/apostas_automaticas.py >> /home/deploy/bolao_apostas.log 2>&1
+```
+15:00 UTC = 12:00 Brasília. Ver/editar com `crontab -e` na VPS.
 
 ## Pontos de atenção
 
 - O `ACCESS_TOKEN` da Meta expira em 24h em ambiente de teste. Sintoma: erro `401 OAuthException code 190` nos logs.
-- O ngrok gera uma nova URL a cada reinicialização. Atualizar em: Meta for Developers → WhatsApp → Configuration → Webhook → Edit.
+- Ao gerar nova chave do Google Sheets: atualizar `CREDENTIALS_FILE` em `sheets/client.py` e copiar o novo `.json` para a VPS via `scp` antes ou logo após o deploy.
+- A trava das 12:00 em `handlers/apostas_dia.py` está **ativa em produção**. Para testes locais sem restrição de horário, chamar `gerar_apostas_automaticas()` diretamente.
+- `COL_FORMULA_INICIO` em `sheets/apostas.py` deve apontar para a primeira coluna com fórmula na aba `bet`. Atualmente é 11 (coluna K = `situacao`). Se adicionar/remover colunas antes dessa posição, atualizar a constante.
 - Para adicionar um novo tipo de mensagem recebida (ex: `interactive`, `location`), criar `handlers/novo_tipo.py` e registrar em `whatsapp/webhook.py`.
 - Para adicionar um novo tipo de envio, adicionar função em `whatsapp/sender.py`.

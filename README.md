@@ -20,19 +20,31 @@ Participante → WhatsApp → Meta Cloud API → Webhook (Flask) → Handlers �
 
 ```
 bolao_copa/
-├── app.py                  # Servidor Flask e rotas
-├── config.py               # Leitura das variáveis de ambiente
-├── estado.py               # Estado da conversa em memória
+├── app.py                        # Servidor Flask e rotas
+├── config.py                     # Leitura das variáveis de ambiente
+├── estado.py                     # Estado da conversa em memória
 ├── whatsapp/
-│   ├── sender.py           # Funções de envio (template, texto)
-│   └── webhook.py          # Recebimento e roteamento de mensagens
+│   ├── sender.py                 # Funções de envio (template, texto)
+│   └── webhook.py                # Recebimento e roteamento de mensagens
 ├── handlers/
-│   ├── texto.py            # Lógica para mensagens de texto
-│   └── botao.py            # Lógica para cliques de botão
+│   ├── texto.py                  # Lógica para mensagens de texto
+│   ├── botao.py                  # Lógica para cliques de botão
+│   ├── aposta.py                 # Fluxo de registro de apostas
+│   ├── apostas_dia.py            # Exibe apostas do dia (após 12h)
+│   ├── ranking.py                # Exibe ranking individual e por família
+│   └── detalhe_jogo.py           # Exibe resultado detalhado por jogo
 ├── sheets/
-│   └── client.py           # Integração com Google Sheets
+│   ├── client.py                 # Integração com Google Sheets
+│   ├── apostas.py                # Leitura e gravação de apostas
+│   ├── aposta_automatica.py      # Geração automática de apostas
+│   ├── ranking.py                # Cálculo de pontuação e ranking
+│   └── detalhe_jogo.py           # Busca apostas por jogo
+├── scripts/
+│   └── apostas_automaticas.py    # Script para cron (apostas automáticas)
+├── utils/
+│   └── flags.py                  # Emojis de bandeiras por país
 ├── pyproject.toml
-└── .env                    # Variáveis de ambiente (não versionar)
+└── .env                          # Variáveis de ambiente (não versionar)
 ```
 
 ---
@@ -217,9 +229,20 @@ O projeto usa uma conta de serviço do Google para acessar a planilha. Para conf
 
 ---
 
+## Apostas automáticas
+
+Participantes que não apostarem até as 12:00 do dia do jogo recebem apostas geradas automaticamente com placares aleatórios baseados em probabilidades reais de futebol (máx. 4 gols, sendo 4 com apenas 5% de chance). As apostas automáticas são marcadas com `origem = "auto"` na planilha e exibidas com o emoji 🤖 no bot.
+
+A geração ocorre:
+- **Ao vivo**, quando qualquer usuário clica "ver apostas do dia" após as 12:00
+- **Via cron** no VPS às 15:00 UTC (12:00 Brasília), como rede de segurança
+
+As probabilidades são configuráveis em `sheets/aposta_automatica.py` → `REGRAS_PLACAR`.
+
+---
+
 ## Observações importantes
 
 - O arquivo `.env` e o `.json` de credenciais do Google **nunca devem ser versionados** (já estão no `.gitignore`)
 - O estado da conversa (`estado.py`) é mantido em memória: reiniciar o servidor limpa o estado de todos os usuários
-- Para produção, o estado deve ser persistido em banco de dados ou Redis
-- O ngrok gera uma nova URL a cada reinicialização; lembre de atualizar a URL no painel da Meta sempre que reiniciar
+- Ao gerar nova chave do Google Sheets, atualizar `CREDENTIALS_FILE` em `sheets/client.py` e copiar o `.json` para a VPS
