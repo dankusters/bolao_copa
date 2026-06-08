@@ -61,18 +61,16 @@ def gravar_apostas(apostas: list[dict]):
     cabecalhos = ws.row_values(1)
 
     todos_valores = ws.get_all_values()
-    template_row = len(todos_valores)  # última linha com dados antes de inserir
+    template_row = len(todos_valores)
 
-    for i, aposta in enumerate(apostas):
-        linha = [aposta.get(col, "") for col in cabecalhos]
-        ws.append_row(linha)
+    linhas = [[aposta.get(col, "") for col in cabecalhos] for aposta in apostas]
+    ws.append_rows(linhas)
 
-        if template_row > 1:
-            nova_linha = template_row + i + 1
-            _copiar_formulas(ws, template_row, nova_linha)
+    if template_row > 1:
+        _copiar_formulas(ws, template_row, template_row + 1, template_row + len(apostas))
 
 
-def _copiar_formulas(ws, origem: int, destino: int):
+def _copiar_formulas(ws, origem: int, destino_inicio: int, destino_fim: int):
     ws.spreadsheet.batch_update({
         "requests": [{
             "copyPaste": {
@@ -85,8 +83,8 @@ def _copiar_formulas(ws, origem: int, destino: int):
                 },
                 "destination": {
                     "sheetId": ws.id,
-                    "startRowIndex": destino - 1,
-                    "endRowIndex": destino,
+                    "startRowIndex": destino_inicio - 1,
+                    "endRowIndex": destino_fim,
                     "startColumnIndex": COL_FORMULA_INICIO - 1,
                     "endColumnIndex": COL_FORMULA_FIM,
                 },
