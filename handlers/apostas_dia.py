@@ -36,7 +36,8 @@ def handle_apostas_dia(numero: str):
             linhas.append("Nenhuma aposta registrada.")
         else:
             for a in apostas:
-                linhas.append(f"{a.get('nome', '')} {a.get('gols_mandante', '')} x {a.get('gols_visitante', '')}")
+                robo = " 🤖" if a.get("origem") == "auto" else ""
+                linhas.append(f"{a.get('nome', '')}{robo} {a.get('gols_mandante', '')} x {a.get('gols_visitante', '')}")
 
         blocos.append("\n".join(linhas))
 
