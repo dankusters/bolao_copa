@@ -3,6 +3,7 @@ from handlers.apostas_dia import handle_apostas_dia
 from handlers.ranking import handle_ranking, handle_ranking_familia
 from handlers.detalhe_jogo import handle_detalhe_jogo
 from handlers.detalhe_apostador import iniciar_detalhe_apostador
+from handlers.calendario import handle_calendario
 from whatsapp.sender import enviar_texto
 
 
@@ -21,6 +22,8 @@ def handle_botao(numero: str, msg: dict):
         handle_ranking_familia(numero)
     elif "ranking" in texto_botao:
         handle_ranking(numero)
+    elif "calend" in texto_botao:
+        handle_calendario(numero)
     elif "jogo" in texto_botao:
         handle_detalhe_jogo(numero)
     else:
