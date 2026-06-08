@@ -1,5 +1,6 @@
 from whatsapp.sender import enviar_texto, enviar_cta
 from sheets.detalhe_jogo import buscar_detalhe_por_jogo
+from utils.flags import bandeira
 
 
 def handle_detalhe_jogo(numero: str):
@@ -19,7 +20,10 @@ def handle_detalhe_jogo(numero: str):
         visitante = jogo["time_visitante"]
         gm = jogo["gols_mandante"]
         gv = jogo["gols_visitante"]
-        linhas.append(f"*{mandante} {gm} x {visitante} {gv}*")
+        flag_m = bandeira(mandante)
+        flag_v = bandeira(visitante)
+        linhas.append(f"*{flag_m} {mandante} {gm} x {gv} {visitante} {flag_v}*")
+        linhas.append("")
 
         if not apostas:
             linhas.append("  Nenhuma aposta registrada para este jogo.")
@@ -30,7 +34,7 @@ def handle_detalhe_jogo(numero: str):
                 gv_a = a.get("gols_visitante", "")
                 pts = _to_int(a.get("pontos_totais", 0))
                 plural = "ponto" if pts == 1 else "pontos"
-                linhas.append(f"- {nome} apostou {mandante} {gm_a} x {visitante} {gv_a} ({pts} {plural})")
+                linhas.append(f"- {nome} apostou {flag_m} {mandante} {gm_a} x {gv_a} {visitante} {flag_v} ({pts} {plural})")
 
         linhas.append("")
 
