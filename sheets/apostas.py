@@ -52,7 +52,7 @@ def apostas_existentes(nome: str, ids_jogos: list) -> list[dict]:
     ]
 
 
-COL_FORMULA_INICIO = 10  # coluna J
+COL_FORMULA_INICIO = 11  # coluna K (origem em J não tem fórmula)
 COL_FORMULA_FIM = 17    # coluna Q (inclusive)
 
 
