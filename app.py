@@ -9,7 +9,7 @@ app = Flask(__name__)
 # rota raiz
 @app.route("/")
 def root():
-    return "Bolão dos Camargos - online!"
+    return "Bolão dos Camargos - online! [maquina2]"
 
 
 # ============================================================
