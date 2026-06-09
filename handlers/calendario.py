@@ -23,6 +23,8 @@ def handle_calendario(numero: str):
         dia = dt.date()
 
         if dia != data_atual:
+            if data_atual is not None:
+                blocos.append("")
             data_atual = dia
             dia_semana = _DIAS_PT[dia.weekday()]
             if dia == hoje:
