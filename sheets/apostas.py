@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from sheets.client import get_worksheet
 
 
@@ -27,13 +27,38 @@ def buscar_membros_familia(familia: str) -> list[str]:
     ]
 
 
+def _data_logica_hoje() -> date:
+    """Antes das 02:00 AM pertencemos ainda ao dia anterior."""
+    agora = datetime.now()
+    if agora.hour < 2:
+        return (agora - timedelta(days=1)).date()
+    return agora.date()
+
+
+def _eh_jogo_do_dia(dt: datetime) -> bool:
+    """Jogos até 02:00 AM do dia seguinte contam como do dia atual."""
+    dia = _data_logica_hoje()
+    amanha = dia + timedelta(days=1)
+    return dt.date() == dia or (dt.date() == amanha and dt.hour < 2)
+
+
+def tem_jogo_madrugada(jogos: list[dict]) -> bool:
+    """Retorna True se algum jogo da lista é na madrugada do dia seguinte (< 02:00 AM)."""
+    dia = _data_logica_hoje()
+    amanha = dia + timedelta(days=1)
+    for j in jogos:
+        dt = _parse_data_hora(str(j.get("data_hora", "")))
+        if dt and dt.date() == amanha and dt.hour < 2:
+            return True
+    return False
+
+
 def buscar_jogos_hoje() -> list[dict]:
     ws = get_worksheet("jogos")
-    hoje = date.today()
     jogos = []
     for r in ws.get_all_records():
         dt = _parse_data_hora(str(r.get("data_hora", "")))
-        if dt and dt.date() == hoje:
+        if dt and _eh_jogo_do_dia(dt):
             jogos.append(r)
     return jogos
 

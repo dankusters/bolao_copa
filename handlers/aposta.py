@@ -9,6 +9,7 @@ from sheets.apostas import (
     apostas_existentes,
     gravar_apostas,
     nome_esta_cadastrado,
+    tem_jogo_madrugada,
 )
 
 
@@ -53,6 +54,11 @@ def iniciar_aposta(numero: str):
         if outros else ""
     )
 
+    aviso_madrugada = (
+        "\n\n⚠️ Os jogos de madrugada do dia seguinte são considerados apostas de hoje."
+        if tem_jogo_madrugada(jogos_hoje) else ""
+    )
+
     set_estado(numero, "aguardando_nome", {
         "apostador_nome": nome,
         "apostador_familia": familia,
@@ -66,7 +72,7 @@ def iniciar_aposta(numero: str):
         numero,
         f"Olá, {nome}!\n\n"
         f"Hoje, {data_hoje}, teremos {count} {plural}:\n\n"
-        f"{jogos_linhas}\n\n"
+        f"{jogos_linhas}{aviso_madrugada}\n\n"
         f"Escreva o nome para quem você vai fazer a aposta. Se for você mesmo, coloque o seu nome.\n\n{aviso}",
     )
 

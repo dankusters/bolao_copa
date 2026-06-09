@@ -1,17 +1,15 @@
-from datetime import date
 from sheets.client import get_worksheet
-from sheets.apostas import _parse_data_hora
+from sheets.apostas import _parse_data_hora, _eh_jogo_do_dia
 
 
 def buscar_apostas_do_dia() -> list[dict]:
     """Retorna todos os jogos do dia com as apostas de cada um, independente de resultado."""
     ws_jogos = get_worksheet("jogos")
-    hoje = date.today()
     jogos_hoje = []
 
     for r in ws_jogos.get_all_records():
         dt = _parse_data_hora(str(r.get("data_hora", "")))
-        if dt and dt.date() == hoje:
+        if dt and _eh_jogo_do_dia(dt):
             jogos_hoje.append(r)
 
     if not jogos_hoje:
@@ -34,12 +32,11 @@ def buscar_apostas_do_dia() -> list[dict]:
 def buscar_detalhe_por_jogo() -> list[dict]:
     """Retorna jogos do dia que já têm resultado, com as apostas de cada um."""
     ws_jogos = get_worksheet("jogos")
-    hoje = date.today()
     jogos_hoje_com_resultado = []
 
     for r in ws_jogos.get_all_records():
         dt = _parse_data_hora(str(r.get("data_hora", "")))
-        if not dt or dt.date() != hoje:
+        if not dt or not _eh_jogo_do_dia(dt):
             continue
         gm = str(r.get("gols_mandante", "")).strip()
         gv = str(r.get("gols_visitante", "")).strip()

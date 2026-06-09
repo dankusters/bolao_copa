@@ -1,7 +1,7 @@
 from datetime import datetime
 from whatsapp.sender import enviar_texto, enviar_cta
 from sheets.detalhe_jogo import buscar_apostas_do_dia
-from sheets.apostas import _parse_data_hora
+from sheets.apostas import _parse_data_hora, tem_jogo_madrugada
 from sheets.aposta_automatica import gerar_apostas_automaticas
 from utils.flags import bandeira
 
@@ -22,7 +22,11 @@ def handle_apostas_dia(numero: str):
         enviar_cta(numero)
         return
 
+    jogos = [item["jogo"] for item in detalhes]
     blocos = []
+    if tem_jogo_madrugada(jogos):
+        blocos.append("⚠️ Os jogos de madrugada do dia seguinte são considerados apostas de hoje.")
+
     for item in detalhes:
         jogo = item["jogo"]
         apostas = item["apostas"]
