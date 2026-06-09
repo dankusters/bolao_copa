@@ -10,7 +10,7 @@ _MENSAGEM_BOAS_VINDAS = (
     "- caso o apostador não faça aposta até as 12:00 AM, o robô 🤖 criará uma aposta aleatória com limite de até 3 gols para qualquer lado.\n"
     "- qualquer adulto poderá apostar por qualquer outro apostador adulto ou criança do mesmo \"núcleo familiar\".\n\n"
     "🏆 *Pontuação:*\n"
-    "- para ficar competitivo até o final, acertar a situação (vitória mandante, vitória visitante ou empate) vale 1 ponto e placar exato vale 1 ponto extra.\n"
+    "- para ficar competitivo até o final, acertar a situação (vitória mandante, vitória visitante ou empate) vale 1 ponto e placar exato vale 2 pontos extras, totalizando até 3 pontos por partida.\n"
     "- na fase de eliminação, para jogos que forem para disputa de pênaltis, será pontuada a situação de empate e placar exato considerando tempo regular + prorrogação. Resultado dos pênaltis e placar dos pênaltis não serão considerados.\n\n"
     "👨‍👩‍👧‍👦 *Ranking família:*\n"
     "- soma de pontuação dividida pela quantidade de apostadores do \"núcleo familiar\"."
