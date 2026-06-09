@@ -42,7 +42,7 @@ def buscar_ranking_familia() -> tuple[list[dict], dict | None]:
         dados["pontos"] = round(total / divisor, 2) if total and divisor else 0
 
     ranking = [{"nome": familia, **dados} for familia, dados in stats.items()]
-    ranking.sort(key=lambda x: x["pontos"], reverse=True)
+    ranking.sort(key=lambda x: (x["pontos"], x["placar_mosca"]), reverse=True)
 
     return ranking, ultima_atualizacao
 

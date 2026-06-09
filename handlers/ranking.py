@@ -28,8 +28,21 @@ def handle_ranking_familia(numero: str):
         cabecalho = "Nenhum jogo encerrado ainda.\n"
 
     linhas = [cabecalho, "*Ranking por Família:*\n"]
-    for i, r in enumerate(ranking, 1):
-        linhas.append(f"{i}. {r['nome']} - {_formatar_linha(r)}")
+    pos = 1
+    i = 0
+    while i < len(ranking):
+        r = ranking[i]
+        grupo = []
+        j = i
+        while j < len(ranking) and ranking[j]["pontos"] == r["pontos"] and ranking[j]["placar_mosca"] == r["placar_mosca"]:
+            grupo.append(ranking[j])
+            j += 1
+
+        for g in grupo:
+            linhas.append(f"{pos}. {g['nome']} - {_formatar_linha(g)}")
+
+        pos += len(grupo)
+        i = j
 
     enviar_texto(numero, "\n".join(linhas))
     enviar_cta(numero)
