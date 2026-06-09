@@ -1,5 +1,5 @@
 import random
-from sheets.apostas import buscar_jogos_hoje, apostas_existentes, gravar_apostas
+from sheets.apostas import buscar_jogos_hoje, gravar_apostas
 from sheets.client import get_worksheet
 
 # Regras de probabilidade para geração automática de placares.
@@ -39,7 +39,9 @@ def gerar_apostas_automaticas() -> int:
         return 0
 
     ids_jogos = [str(j["id_jogo"]) for j in jogos_hoje]
+    ids_jogos_set = set(ids_jogos)
     apostadores = get_worksheet("apostadores").get_all_records()
+    todos_bets = get_worksheet("bet").get_all_records()
     now_str = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime("%d/%m/%Y %H:%M")
 
     apostas_novas = []
@@ -50,8 +52,10 @@ def gerar_apostas_automaticas() -> int:
             continue
 
         ids_com_aposta = {
-            str(a["id_jogo"])
-            for a in apostas_existentes(nome, ids_jogos)
+            str(b["id_jogo"])
+            for b in todos_bets
+            if str(b.get("nome", "")).strip().lower() == nome.lower()
+            and str(b.get("id_jogo", "")).strip() in ids_jogos_set
         }
 
         for jogo in jogos_hoje:
