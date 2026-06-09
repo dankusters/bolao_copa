@@ -4,6 +4,7 @@ from handlers.ranking import handle_ranking, handle_ranking_familia
 from handlers.detalhe_jogo import handle_detalhe_jogo
 from handlers.detalhe_apostador import iniciar_detalhe_apostador
 from handlers.calendario import handle_calendario
+from handlers.regras import handle_regras
 from whatsapp.sender import enviar_texto
 
 
@@ -26,5 +27,7 @@ def handle_botao(numero: str, msg: dict):
         handle_calendario(numero)
     elif "jogo" in texto_botao:
         handle_detalhe_jogo(numero)
+    elif "regra" in texto_botao:
+        handle_regras(numero)
     else:
         enviar_texto(numero, f"Botão '{texto_botao}' não reconhecido.")
