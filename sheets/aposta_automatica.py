@@ -34,6 +34,7 @@ def gerar_apostas_automaticas() -> int:
     """Gera apostas automáticas para todos os apostadores que ainda não
     apostaram nos jogos de hoje. Retorna o número de apostas inseridas."""
     from datetime import datetime
+    from zoneinfo import ZoneInfo
 
     jogos_hoje = buscar_jogos_hoje()
     if not jogos_hoje:
@@ -41,7 +42,7 @@ def gerar_apostas_automaticas() -> int:
 
     ids_jogos = [str(j["id_jogo"]) for j in jogos_hoje]
     apostadores = get_worksheet("apostadores").get_all_records()
-    now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
+    now_str = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime("%d/%m/%Y %H:%M")
 
     apostas_novas = []
     for apostador in apostadores:

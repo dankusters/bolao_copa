@@ -206,7 +206,7 @@ def _mostrar_resumo(numero: str, dados: dict):
 
 def _handle_confirmacao(numero: str, texto: str, dados: dict):
     if texto.lower() == "sim":
-        now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
+        now_str = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime("%d/%m/%Y %H:%M")
         nome = dados["nome_para_aposta"]
         rows = [
             {
