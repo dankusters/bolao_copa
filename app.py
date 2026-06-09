@@ -1,3 +1,4 @@
+import threading
 from flask import Flask, request, jsonify, make_response
 from config import VERIFY_TOKEN, RECIPIENT_NUMBER
 from whatsapp.sender import enviar_template
@@ -42,7 +43,7 @@ def verify_webhook():
 @app.route("/webhook", methods=["POST"])
 def receber_mensagem():
     data = request.get_json()
-    processar_webhook(data)
+    threading.Thread(target=processar_webhook, args=(data,), daemon=True).start()
     return jsonify({"status": "ok"}), 200
 
 
