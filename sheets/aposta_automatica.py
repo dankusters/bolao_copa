@@ -8,12 +8,10 @@ from sheets.client import get_worksheet
 # 0,1,2,3 tem peso 22.5).
 REGRAS_PLACAR = {
     "mandante": [
-        {"faixa": (0, 3), "peso": 95},
-        {"faixa": (4, 4), "peso": 5},
+        {"faixa": (0, 3), "peso": 100},
     ],
     "visitante": [
-        {"faixa": (0, 3), "peso": 95},
-        {"faixa": (4, 4), "peso": 5},
+        {"faixa": (0, 3), "peso": 100},
     ],
 }
 
