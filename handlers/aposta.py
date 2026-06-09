@@ -16,14 +16,15 @@ from sheets.apostas import (
 
 def iniciar_aposta(numero: str):
     agora = datetime.now(ZoneInfo("America/Sao_Paulo"))
-    if agora.hour >= 12:
-        enviar_texto(numero, "As apostas só são aceitas até as 12:00 PM. O robô 🤖 fará as apostas de hoje por você!")
-        enviar_cta(numero)
-        return
 
     jogos_hoje = buscar_jogos_hoje()
     if not jogos_hoje:
         enviar_texto(numero, "Hoje não temos jogos da Copa! Aguarde! ⚽")
+        enviar_cta(numero)
+        return
+
+    if agora.hour >= 12:
+        enviar_texto(numero, "As apostas só são aceitas até as 12:00 PM. O robô 🤖 fará as apostas de hoje por você!")
         enviar_cta(numero)
         return
 
