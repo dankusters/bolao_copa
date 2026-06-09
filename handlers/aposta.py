@@ -1,4 +1,5 @@
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from estado import get_estado, set_estado, limpar_estado
 from whatsapp.sender import enviar_texto, enviar_template, enviar_cta
 from utils.flags import bandeira
@@ -14,7 +15,7 @@ from sheets.apostas import (
 
 
 def iniciar_aposta(numero: str):
-    agora = datetime.now()
+    agora = datetime.now(ZoneInfo("America/Sao_Paulo"))
     if agora.hour >= 12:
         enviar_texto(numero, "As apostas só são aceitas até as 12:00. O robô 🤖 fará as apostas de hoje por você!")
         enviar_cta(numero)

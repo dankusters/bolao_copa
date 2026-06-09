@@ -1,4 +1,5 @@
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from whatsapp.sender import enviar_texto, enviar_cta
 from sheets.detalhe_jogo import buscar_apostas_do_dia
 from sheets.apostas import _parse_data_hora, tem_jogo_madrugada
@@ -7,7 +8,7 @@ from utils.flags import bandeira
 
 
 def handle_apostas_dia(numero: str):
-    if datetime.now().hour < 12:
+    if datetime.now(ZoneInfo("America/Sao_Paulo")).hour < 12:
         enviar_texto(numero, "Apressadinho(a), as apostas só são reveladas depois das 12:00.")
         enviar_cta(numero)
         return
