@@ -50,7 +50,7 @@ def iniciar_aposta(numero: str):
     jogos_linhas = "\n".join(jogos_lista)
 
     aviso = (
-        f" Lembre-se que você só pode fazer uma aposta para você ou para "
+        f"⚠️ Lembre-se que você só pode fazer uma aposta para você ou para "
         f"{', '.join(outros)} da família {familia}."
         if outros else ""
     )
