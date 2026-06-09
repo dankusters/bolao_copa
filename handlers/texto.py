@@ -12,6 +12,8 @@ _REGRAS = (
     "🏆 *Pontuação:*\n"
     "- para ficar competitivo até o final, acertar a situação (vitória mandante, vitória visitante ou empate) vale 1 ponto e placar exato vale 2 pontos extras, totalizando até 3 pontos por partida.\n"
     "- na fase de eliminação, para jogos que forem para disputa de pênaltis, será pontuada a situação de empate e placar exato considerando tempo regular + prorrogação. Resultado dos pênaltis e placar dos pênaltis não serão considerados.\n\n"
+    "🥇 *Ranking geral:*\n"
+    "- ao final do bolão, em caso de empate nos pontos, será considerado \"vencedor\" o apostador que tiver a maior quantidade de placares acertados; se ainda assim permanecer o empate, divide-se o prêmio ou o valor do prêmio (se houver premiação).\n\n"
     "👨‍👩‍👧‍👦 *Ranking família:*\n"
     "- soma de pontuação dividida pela quantidade de apostadores do \"núcleo familiar\"."
 )
