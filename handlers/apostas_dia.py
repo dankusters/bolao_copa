@@ -9,7 +9,7 @@ from utils.flags import bandeira
 
 def handle_apostas_dia(numero: str):
     if datetime.now(ZoneInfo("America/Sao_Paulo")).hour < 12:
-        enviar_texto(numero, "Apressadinho(a), as apostas só são reveladas depois das 12:00.")
+        enviar_texto(numero, "Apressadinho(a), as apostas só são reveladas depois das 12:00 PM.")
         enviar_cta(numero)
         return
 
