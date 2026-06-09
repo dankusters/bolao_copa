@@ -38,12 +38,14 @@ uv run python scripts/atualizar_resultados.py
 O fluxo de uma mensagem recebida é:
 
 ```
-Meta → POST /webhook → processar_webhook() → handler por tipo → sender
+Meta → POST /webhook → thread background → processar_webhook() → handler por tipo → sender
 ```
+
+**`app.py`** recebe o POST da Meta, dispara `processar_webhook()` em uma **background thread** e retorna `200` imediatamente. Isso evita que a Meta reenvie o webhook por timeout (>20s) em operações pesadas como geração de apostas automáticas.
 
 **`whatsapp/webhook.py`** recebe o payload da Meta, extrai o tipo da mensagem (`text`, `button`, etc.) e delega para o handler correspondente. Não contém lógica de negócio.
 
-**`handlers/texto.py`** e **`handlers/botao.py`** contêm toda a lógica condicional do bot — é aqui que crescerá a maior parte do código conforme novos fluxos forem adicionados.
+**`handlers/texto.py`** e **`handlers/botao.py`** contêm toda a lógica condicional do bot — é aqui que crescerá a maior parte do código conforme novos fluxos forem adicionados. `handlers/texto.py` verifica primeiro acesso (coluna `primeiro_acesso` na aba `apostadores`) e envia as regras do bolão na primeira interação.
 
 **`whatsapp/sender.py`** centraliza os envios:
 - `enviar_template(numero, texto)` — envia o template `main_bolao` (com imagem no header e texto no body)
@@ -54,13 +56,30 @@ Meta → POST /webhook → processar_webhook() → handler por tipo → sender
 
 **`sheets/client.py`** expõe `get_worksheet(nome)` para acessar abas da planilha `tabela_copa`. Abas disponíveis: `jogos`, `bet`, `apostadores`. O ID da planilha está hardcoded na constante `FOLDER_ID`.
 
-**`sheets/aposta_automatica.py`** gera apostas aleatórias para apostadores que não apostaram até as 12:00. A função `gerar_apostas_automaticas()` é idempotente — verifica `apostas_existentes` antes de criar, nunca duplica. As probabilidades são configuradas em `REGRAS_PLACAR` (máx 4 gols, sendo 4 com 5% de chance). Apostas automáticas são marcadas com `origem = "auto"` na aba `bet`.
+**`sheets/apostas.py`** contém helpers críticos de tempo:
+- `_data_logica_hoje()` — retorna a data lógica do dia. Antes das 02:00 AM (Brasília), pertencemos ainda ao dia anterior.
+- `_eh_jogo_do_dia(dt)` — retorna True para jogos na data lógica de hoje OU na madrugada do dia seguinte (< 02:00 AM). **Todos os checks de "jogos do dia" usam este helper.**
+- `tem_jogo_madrugada(jogos)` — True se algum jogo da lista é na madrugada do dia seguinte.
+- `verificar_e_marcar_primeiro_acesso(telefone)` — retorna o nome do apostador se é o primeiro acesso (e grava a data na coluna `primeiro_acesso`), None caso contrário.
+- **Todos os checks de horário usam `ZoneInfo("America/Sao_Paulo")` explicitamente** — o servidor VPS roda em UTC.
 
-**`scripts/apostas_automaticas.py`** script standalone chamado pelo cron no VPS às 15:00 UTC (12:00 Brasília). Também é chamado inline pelo handler `apostas_dia` ao primeiro acesso após as 12:00, eliminando condição de corrida com o cron.
+**`sheets/aposta_automatica.py`** gera apostas aleatórias para apostadores que não apostaram até as 12:00 PM. A função `gerar_apostas_automaticas()` é idempotente — carrega a aba `bet` **uma única vez** e filtra em memória para evitar quota 429 do Google Sheets. Máximo de 3 gols por time. Apostas automáticas são marcadas com `origem = "auto"` na aba `bet`.
 
-**`scripts/atualizar_resultados.py`** script standalone que consulta a API `football-data.org` (competição `WC`) e atualiza `gols_mandante`/`gols_visitante` na aba `jogos` para jogos finalizados no dia. Requer `FOOTBALL_DATA_TOKEN` no `.env`. Completamente isolado — para remover, basta apagar o arquivo, remover a entrada do crontab e a variável do `.env`. O dicionário `NOMES_TIMES` dentro do script mapeia nomes em inglês (API) para português (planilha) — se aparecer `[MISS]` nos logs, adicionar a entrada faltante lá.
+**`scripts/apostas_automaticas.py`** script standalone chamado pelo cron no VPS às 15:00 UTC (12:00 PM Brasília). Também é chamado inline pelo handler `apostas_dia` ao primeiro acesso após as 12:00 PM, eliminando condição de corrida com o cron.
 
-**`handlers/calendario.py`** + **`sheets/calendario.py`** exibem jogos de hoje e dos próximos dois dias com horário ou placar (se já encerrado), acionados pelo botão "Ver calendário de jogos e resultados".
+**`scripts/atualizar_resultados.py`** script standalone que consulta a API `football-data.org` (competição `WC`) e atualiza `gols_mandante`/`gols_visitante`/`penaltis_mandante`/`penaltis_visitante` na aba `jogos` para jogos finalizados no dia. Requer `FOOTBALL_DATA_TOKEN` no `.env`. As colunas de pênaltis só são gravadas quando o jogo foi a pênaltis (`score.penalties` não nulo na API). O dicionário `NOMES_TIMES` dentro do script mapeia nomes em inglês (API) para português (planilha) — se aparecer `[MISS]` nos logs, adicionar a entrada faltante lá.
+
+**`handlers/calendario.py`** + **`sheets/calendario.py`** exibem jogos de hoje e dos próximos **5 dias** com horário ou placar (se já encerrado), acionados pelo botão "Ver calendário de jogos e resultados".
+
+**`handlers/apostas_dia.py`** exibe apostas do dia (após 12:00 PM Brasília). Chama `gerar_apostas_automaticas()` antes de exibir — idempotente, garante que apostas faltantes sejam criadas mesmo se o cron falhar. Exibe aviso de madrugada quando aplicável.
+
+**`handlers/aposta.py`** gerencia o fluxo de apostas manuais. Trava às 12:00 PM (Brasília) — apostas não são aceitas após este horário.
+
+**`handlers/detalhe_apostador.py`** exibe as últimas 10 apostas de um apostador com total de pontos no bolão, total de placares acertados e total de situações acertadas (calculados sobre o histórico completo).
+
+**`handlers/detalhe_jogo.py`** + **`sheets/detalhe_jogo.py`** exibem os **últimos 6 jogos atualizados** (sem filtro de dia) com todas as apostas e pontuações.
+
+**`handlers/ranking.py`** + **`sheets/ranking.py`** exibem ranking geral e por família. No ranking geral: desempate por placares na mosca; em caso de empate em pontos **e** placares, os nomes aparecem na mesma posição.
 
 ## Variáveis de ambiente (`.env`)
 
@@ -71,6 +90,20 @@ VERIFY_TOKEN=           # String livre usada para validar o webhook na Meta
 RECIPIENT_NUMBER=       # Número de teste (formato: 5511999999999)
 FOOTBALL_DATA_TOKEN=    # Token da API football-data.org (gratuito, não expira)
 ```
+
+## Planilha Google Sheets — estrutura
+
+### Aba `apostadores`
+Colunas relevantes: `nome`, `telefone`, `família`, `primeiro_acesso`.
+- `primeiro_acesso`: preenchido automaticamente com data/hora (Brasília) na primeira interação via WhatsApp. Deve existir na planilha para o recurso de boas-vindas funcionar.
+
+### Aba `jogos`
+Colunas relevantes: `id_jogo`, `data_hora`, `time_mandante`, `time_visitante`, `mandante_x_visitante`, `gols_mandante`, `gols_visitante`, `penaltis_mandante`, `penaltis_visitante`.
+- `penaltis_mandante`/`penaltis_visitante`: preenchidos pelo script de atualização de resultados apenas quando o jogo foi a pênaltis.
+
+### Aba `bet`
+Colunas relevantes: `bet_date`, `nome`, `família`, `id_jogo`, `time_mandante`, `time_visitante`, `mandante_x_visitante`, `gols_mandante`, `gols_visitante`, `situacao`, `isbetdone`, `ponto_placar`, `ponto_situacao`, `pontos_totais`, `origem`.
+- `COL_FORMULA_INICIO` em `sheets/apostas.py` deve apontar para a primeira coluna com fórmula. Atualmente é 11 (coluna K = `situacao`). Se adicionar/remover colunas antes dessa posição, atualizar a constante.
 
 ## Credenciais Google Sheets
 
@@ -99,6 +132,8 @@ Qualquer push na branch `main` dispara o workflow `.github/workflows/deploy.yml`
 3. `uv sync --frozen`
 4. `sudo systemctl restart bolao`
 
+O GitHub Actions ocasionalmente falha por timeout de SSH — neste caso, rodar o deploy manualmente via SSH resolve.
+
 ### Arquivos sensíveis no VPS (não versionados)
 Estes arquivos existem apenas no VPS e nas máquinas locais — nunca no git:
 - `/home/deploy/bolao_copa/.env`
@@ -118,22 +153,27 @@ O secret `VPS_SSH_KEY` no GitHub (usado pelo CI/CD) é independente das chaves l
 ### Cron no VPS
 Crontab do usuário `deploy` (ver/editar com `crontab -e` na VPS):
 ```
-# Apostas automáticas — 15:00 UTC = 12:00 Brasília
-0 15 * * * cd /home/deploy/bolao_copa && uv run python scripts/apostas_automaticas.py >> /home/deploy/bolao_apostas.log 2>&1
+# Apostas automáticas — 15:00 UTC = 12:00 PM Brasília
+0 15 * * * cd /home/deploy/bolao_copa && ~/.local/bin/uv run python scripts/apostas_automaticas.py >> /home/deploy/bolao_apostas.log 2>&1
 
 # Atualização de resultados — a cada 5 min entre 15h-02h UTC (12h-23h Brasília)
 */5 15-23,0-2 * * * cd /home/deploy/bolao_copa && ~/.local/bin/uv run python scripts/atualizar_resultados.py >> /home/deploy/bolao_resultados.log 2>&1
 ```
 
-Logs de resultados: `tail -20 /home/deploy/bolao_resultados.log`
+**Importante:** usar sempre `~/.local/bin/uv` (caminho completo) — o cron não herda o PATH do usuário e `uv` não é encontrado sem o caminho absoluto.
+
+Logs: `tail -20 /home/deploy/bolao_apostas.log` e `tail -20 /home/deploy/bolao_resultados.log`
 
 ## Pontos de atenção
 
 - O `ACCESS_TOKEN` da Meta expira em 24h em ambiente de teste. Sintoma: erro `401 OAuthException code 190` nos logs.
 - Ao gerar nova chave do Google Sheets: atualizar `CREDENTIALS_FILE` em `sheets/client.py` e copiar o novo `.json` para a VPS via `scp` antes ou logo após o deploy.
-- A trava das 12:00 em `handlers/apostas_dia.py` está **ativa em produção**. Para testes locais sem restrição de horário, chamar `gerar_apostas_automaticas()` diretamente.
-- `COL_FORMULA_INICIO` em `sheets/apostas.py` deve apontar para a primeira coluna com fórmula na aba `bet`. Atualmente é 11 (coluna K = `situacao`). Se adicionar/remover colunas antes dessa posição, atualizar a constante.
+- **Timezone:** o servidor VPS roda em UTC. Todos os checks de horário (12:00 PM, 02:00 AM) devem usar `datetime.now(ZoneInfo("America/Sao_Paulo"))` — nunca `datetime.now()` sem timezone.
+- **Dia lógico:** jogos até 02:00 AM do dia seguinte são considerados "jogos de hoje". Usar sempre `_eh_jogo_do_dia(dt)` de `sheets/apostas.py` para este filtro.
+- **Quota Google Sheets:** evitar múltiplas leituras da mesma aba em loops. Carregar os dados uma vez e filtrar em memória. A API permite ~60 leituras/minuto.
+- **Webhook assíncrono:** o `processar_webhook()` roda em background thread. O Flask retorna 200 imediatamente para evitar retries da Meta. Efeito colateral: exceções no handler não retornam HTTP 500 — monitorar via `journalctl`.
+- A trava das 12:00 PM em `handlers/aposta.py` e `handlers/apostas_dia.py` está **ativa em produção**. Para testes locais sem restrição de horário, chamar `gerar_apostas_automaticas()` diretamente.
 - Para adicionar um novo tipo de mensagem recebida (ex: `interactive`, `location`), criar `handlers/novo_tipo.py` e registrar em `whatsapp/webhook.py`.
 - Para adicionar um novo tipo de envio, adicionar função em `whatsapp/sender.py`.
 - Todo handler que encerra o fluxo sem chamar `enviar_template()` deve chamar `enviar_cta()` ao final — padrão estabelecido em todos os handlers existentes.
-- Se `atualizar_resultados.py` logar `[MISS]` para algum time, adicionar a entrada no dicionário `NOMES_TIMES` dentro do próprio script. O `[MISS]` indica que o nome em inglês da API não tem correspondência em português para atualizar a planilha.
+- Se `atualizar_resultados.py` logar `[MISS]` para algum time, adicionar a entrada no dicionário `NOMES_TIMES` dentro do próprio script.
