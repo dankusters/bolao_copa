@@ -3,8 +3,8 @@ from handlers.detalhe_apostador import handle_detalhe_apostador
 from whatsapp.sender import enviar_template, enviar_texto
 from sheets.apostas import verificar_e_marcar_primeiro_acesso
 
-_MENSAGEM_BOAS_VINDAS = (
-    "*Regras:*\n\n"
+_REGRAS = (
+    "\n\n"
     "⚽ *Apostas:*\n"
     "- individuais para cada dia de jogos e podem ser feitas até as 12:00 AM. Jogos da madrugada do dia seguinte serão considerados como \"jogos do dia\". Exemplo: Austrália e Turquia, 14/06, 01:00 AM aparecerá para apostar no dia 13/06.\n"
     "- caso o apostador não faça aposta até as 12:00 AM, o robô 🤖 criará uma aposta aleatória com limite de até 3 gols para qualquer lado.\n"
@@ -21,8 +21,9 @@ def handle_texto(numero: str, msg: dict):
     texto = msg["text"]["body"]
     print(f"[MSG] Mensagem de {numero}: {texto}")
 
-    if verificar_e_marcar_primeiro_acesso(numero):
-        enviar_texto(numero, _MENSAGEM_BOAS_VINDAS)
+    nome = verificar_e_marcar_primeiro_acesso(numero)
+    if nome:
+        enviar_texto(numero, f"Olá, {nome}! Como é seu primeiro acesso, leia atentamente as regras:{_REGRAS}")
 
     if handle_aposta(numero, texto):
         return

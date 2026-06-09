@@ -13,14 +13,14 @@ def buscar_apostador(telefone: str) -> dict | None:
     return None
 
 
-def verificar_e_marcar_primeiro_acesso(telefone: str) -> bool:
-    """Retorna True se é o primeiro acesso do apostador e marca a data. Retorna False caso contrário ou se não for apostador cadastrado."""
+def verificar_e_marcar_primeiro_acesso(telefone: str) -> str | None:
+    """Retorna o nome do apostador se é o primeiro acesso (e marca a data). Retorna None caso contrário ou se não for cadastrado."""
     ws = get_worksheet("apostadores")
     cabecalhos = ws.row_values(1)
     try:
         col_pa = cabecalhos.index("primeiro_acesso") + 1
     except ValueError:
-        return False
+        return None
 
     registros = ws.get_all_records()
     for idx, r in enumerate(registros):
@@ -28,9 +28,9 @@ def verificar_e_marcar_primeiro_acesso(telefone: str) -> bool:
             if not str(r.get("primeiro_acesso", "")).strip():
                 linha = idx + 2
                 ws.update_cell(linha, col_pa, datetime.now(_TZ).strftime("%d/%m/%Y %H:%M"))
-                return True
-            return False
-    return False
+                return str(r.get("nome", "")).strip()
+            return None
+    return None
 
 
 def nome_esta_cadastrado(nome: str) -> bool:
