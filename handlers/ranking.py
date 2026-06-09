@@ -44,21 +44,37 @@ def handle_ranking(numero: str):
         cabecalho = "Nenhum jogo encerrado ainda.\n"
 
     linhas = [cabecalho, "*Ranking do Bolão 🏆:*\n"]
-    for i, r in enumerate(ranking, 1):
-        pontos = r["pontos"]
-        mosca = r["placar_mosca"]
-        resultado = r["resultado"]
+    pos = 1
+    i = 0
+    while i < len(ranking):
+        r = ranking[i]
+        grupo = []
+        j = i
+        while j < len(ranking) and ranking[j]["pontos"] == r["pontos"] and ranking[j]["placar_mosca"] == r["placar_mosca"]:
+            grupo.append(ranking[j])
+            j += 1
+
+        nomes = ", ".join(g["nome"] for g in grupo)
+        pontos = grupo[0]["pontos"]
         pontos_str = str(int(pontos)) if pontos == int(pontos) else str(pontos)
         plural_pts = "ponto" if pontos == 1 else "pontos"
-        linhas.append(f"*{i}. {r['nome']} - {pontos_str} {plural_pts}*")
-        partes = []
-        if mosca > 0:
-            partes.append(f"{mosca} {'placar na mosca' if mosca == 1 else 'placares na mosca'}")
-        if resultado > 0:
-            partes.append(f"{resultado} {'situação' if resultado == 1 else 'situações'}")
-        if partes:
-            linhas.append(f"- acertou {' e '.join(partes)}")
+        linhas.append(f"*{pos}. {nomes} - {pontos_str} {plural_pts}*")
+
+        for g in grupo:
+            mosca = g["placar_mosca"]
+            resultado = g["resultado"]
+            partes = []
+            if mosca > 0:
+                partes.append(f"{mosca} {'placar na mosca' if mosca == 1 else 'placares na mosca'}")
+            if resultado > 0:
+                partes.append(f"{resultado} {'situação' if resultado == 1 else 'situações'}")
+            if partes:
+                prefixo = f"  {g['nome']}: " if len(grupo) > 1 else "- "
+                linhas.append(f"{prefixo}acertou {' e '.join(partes)}")
+
         linhas.append("")
+        pos += len(grupo)
+        i = j
 
     enviar_texto(numero, "\n".join(linhas))
     enviar_cta(numero)

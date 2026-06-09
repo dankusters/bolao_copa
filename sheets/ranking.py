@@ -69,7 +69,7 @@ def buscar_ranking() -> tuple[list[dict], dict | None]:
             stats[nome]["resultado"] += 1
 
     ranking = [{"nome": nome, **dados} for nome, dados in stats.items() if nome]
-    ranking.sort(key=lambda x: x["pontos"], reverse=True)
+    ranking.sort(key=lambda x: (x["pontos"], x["placar_mosca"]), reverse=True)
 
     return ranking, ultima_atualizacao
 
