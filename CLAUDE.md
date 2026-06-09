@@ -47,6 +47,8 @@ Meta → POST /webhook → thread background → processar_webhook() → handler
 
 **`handlers/texto.py`** e **`handlers/botao.py`** contêm toda a lógica condicional do bot — é aqui que crescerá a maior parte do código conforme novos fluxos forem adicionados. `handlers/texto.py` verifica primeiro acesso (coluna `primeiro_acesso` na aba `apostadores`) e envia as regras do bolão na primeira interação.
 
+**`handlers/regras.py`** centraliza o texto das regras do bolão (constante `REGRAS`) e o handler `handle_regras()`. Importado por `handlers/texto.py` (primeiro acesso) e `handlers/botao.py` (botão "Regras").
+
 **`whatsapp/sender.py`** centraliza os envios:
 - `enviar_template(numero, texto)` — envia o template `main_bolao` (com imagem no header e texto no body)
 - `enviar_texto(numero, texto)` — envia mensagem de texto livre (só válida dentro da janela de 24h após o usuário interagir)
@@ -79,7 +81,9 @@ Meta → POST /webhook → thread background → processar_webhook() → handler
 
 **`handlers/detalhe_jogo.py`** + **`sheets/detalhe_jogo.py`** exibem os **últimos 6 jogos atualizados** (sem filtro de dia) com todas as apostas e pontuações.
 
-**`handlers/ranking.py`** + **`sheets/ranking.py`** exibem ranking geral e por família. No ranking geral: desempate por placares na mosca; em caso de empate em pontos **e** placares, os nomes aparecem na mesma posição.
+**`handlers/ranking.py`** + **`sheets/ranking.py`** exibem ranking geral e por família. Em ambos os rankings: desempate por placares na mosca; em caso de empate em pontos **e** placares, os nomes/famílias aparecem na mesma posição.
+
+**`handlers/aposta.py`** verifica existência de jogos do dia **antes** da trava de 12:00 PM — assim, dias sem jogos exibem mensagem correta independente do horário.
 
 ## Variáveis de ambiente (`.env`)
 
