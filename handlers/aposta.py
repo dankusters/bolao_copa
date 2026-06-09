@@ -14,8 +14,8 @@ from sheets.apostas import (
 
 def iniciar_aposta(numero: str):
     agora = datetime.now()
-    if agora.hour >= 23 and agora.minute >= 59:  # TODO: restaurar para hour >= 12 no deploy
-        enviar_texto(numero, "Apressadinho(a)! As apostas só são aceitas até as 23:59. Aguarde até amanhã! 😅")
+    if agora.hour >= 12:
+        enviar_texto(numero, "As apostas só são aceitas até as 12:00. O robô 🤖 fará as apostas de hoje por você!")
         enviar_cta(numero)
         return
 

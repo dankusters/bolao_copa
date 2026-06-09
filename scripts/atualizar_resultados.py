@@ -168,6 +168,8 @@ def atualizar_resultados():
     try:
         col_gm = cabecalhos.index("gols_mandante") + 1
         col_gv = cabecalhos.index("gols_visitante") + 1
+        col_pm = cabecalhos.index("penaltis_mandante") + 1
+        col_pv = cabecalhos.index("penaltis_visitante") + 1
     except ValueError as e:
         print(f"[ERRO] Coluna não encontrada na aba 'jogos': {e}")
         return
@@ -180,6 +182,8 @@ def atualizar_resultados():
         visitante_pt = _traduzir(jogo_api["awayTeam"]["name"])
         gm = jogo_api["score"]["fullTime"]["home"]
         gv = jogo_api["score"]["fullTime"]["away"]
+        pm = jogo_api["score"]["penalties"]["home"]
+        pv = jogo_api["score"]["penalties"]["away"]
 
         if gm is None or gv is None:
             print(f"[SKIP] {mandante_pt} x {visitante_pt}: placar final não disponível ainda.")
@@ -193,14 +197,22 @@ def atualizar_resultados():
             if (row["time_mandante"].strip() == mandante_pt and
                     row["time_visitante"].strip() == visitante_pt):
                 encontrado = True
-                if (str(row.get("gols_mandante", "")).strip() == str(gm) and
-                        str(row.get("gols_visitante", "")).strip() == str(gv)):
+                ja_tem_gols = (str(row.get("gols_mandante", "")).strip() == str(gm) and
+                               str(row.get("gols_visitante", "")).strip() == str(gv))
+                ja_tem_pen = (str(row.get("penaltis_mandante", "")).strip() == (str(pm) if pm is not None else "") and
+                              str(row.get("penaltis_visitante", "")).strip() == (str(pv) if pv is not None else ""))
+                if ja_tem_gols and ja_tem_pen:
                     print(f"[SKIP] {mandante_pt} {gm} x {gv} {visitante_pt} já atualizado.")
                     break
                 linha = idx + 2  # +1 cabeçalho, +1 índice base-1
                 ws.update_cell(linha, col_gm, gm)
                 ws.update_cell(linha, col_gv, gv)
-                print(f"[OK] {mandante_pt} {gm} x {gv} {visitante_pt} atualizado.")
+                if pm is not None and pv is not None:
+                    ws.update_cell(linha, col_pm, pm)
+                    ws.update_cell(linha, col_pv, pv)
+                    print(f"[OK] {mandante_pt} {gm} x {gv} {visitante_pt} (pen: {pm} x {pv}) atualizado.")
+                else:
+                    print(f"[OK] {mandante_pt} {gm} x {gv} {visitante_pt} atualizado.")
                 atualizados += 1
                 break
 

@@ -7,7 +7,7 @@ _DIAS_PT = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Doming
 
 
 def handle_calendario(numero: str):
-    jogos = buscar_calendario()
+    jogos = buscar_calendario(dias_futuros=5)
 
     if not jogos:
         enviar_texto(numero, "Nenhum jogo encontrado nos próximos dias.")
@@ -15,7 +15,7 @@ def handle_calendario(numero: str):
         return
 
     hoje = date.today()
-    blocos = ["📅 *Jogos de hoje e dos próximos dois dias*\n"]
+    blocos = ["📅 *Jogos de hoje e dos próximos cinco dias*\n"]
     data_atual = None
 
     for jogo in jogos:

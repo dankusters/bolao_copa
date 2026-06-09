@@ -36,7 +36,7 @@ def handle_detalhe_apostador(numero: str, texto: str) -> bool:
     total = sum(_to_int(item["bet"].get("pontos_totais", 0)) for item in extrato)
     exibir = extrato[-10:]
 
-    linhas = [f"*Apostas de {match}:*"]
+    linhas = [f"*Últimas 10 apostas de {match}:*"]
     if len(extrato) > 10:
         linhas.append(f"_(exibindo as últimas {len(exibir)} de {len(extrato)} apostas)_")
 
@@ -54,7 +54,7 @@ def handle_detalhe_apostador(numero: str, texto: str) -> bool:
         linhas.append(f"\n{nome_m} {j['gols_mandante']} x {nome_v} {j['gols_visitante']}")
         linhas.append(f"fez {pts} {plural_pts}, {placar_txt} e {situacao_txt}")
 
-    linhas.append(f"\nTotal de pontos até última atualização: {total}")
+    linhas.append(f"\nTotal de pontos no bolão até última atualização: {total}")
     enviar_texto(numero, "\n".join(linhas))
     enviar_cta(numero)
     return True
