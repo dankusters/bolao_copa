@@ -8,14 +8,15 @@ Exemplo de cron (todo dia ao meio-dia, horário de Brasília UTC-3):
 import sys
 import os
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sheets.aposta_automatica import gerar_apostas_automaticas
 
-HORARIO_CORTE = 12  # hora local a partir da qual apostas automáticas são geradas
+HORARIO_CORTE = 12  # hora Brasília a partir da qual apostas automáticas são geradas
 
-agora = datetime.now()
+agora = datetime.now(ZoneInfo("America/Sao_Paulo"))
 print(f"[{agora.strftime('%Y-%m-%d %H:%M')}] Verificando apostas automáticas...")
 
 if agora.hour < HORARIO_CORTE:

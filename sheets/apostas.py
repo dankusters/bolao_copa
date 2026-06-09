@@ -1,4 +1,7 @@
 from datetime import datetime, date, timedelta
+from zoneinfo import ZoneInfo
+
+_TZ = ZoneInfo("America/Sao_Paulo")
 from sheets.client import get_worksheet
 
 
@@ -29,7 +32,7 @@ def buscar_membros_familia(familia: str) -> list[str]:
 
 def _data_logica_hoje() -> date:
     """Antes das 02:00 AM pertencemos ainda ao dia anterior."""
-    agora = datetime.now()
+    agora = datetime.now(_TZ)
     if agora.hour < 2:
         return (agora - timedelta(days=1)).date()
     return agora.date()
