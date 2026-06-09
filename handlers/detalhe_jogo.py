@@ -11,7 +11,7 @@ def handle_detalhe_jogo(numero: str):
         enviar_cta(numero)
         return
 
-    linhas = ["*Jogos já atualizados:*\n"]
+    linhas = ["*Últimos 6 jogos atualizados:*\n"]
     for item in detalhes:
         jogo = item["jogo"]
         apostas = item["apostas"]
