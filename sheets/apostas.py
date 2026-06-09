@@ -13,6 +13,26 @@ def buscar_apostador(telefone: str) -> dict | None:
     return None
 
 
+def verificar_e_marcar_primeiro_acesso(telefone: str) -> bool:
+    """Retorna True se é o primeiro acesso do apostador e marca a data. Retorna False caso contrário ou se não for apostador cadastrado."""
+    ws = get_worksheet("apostadores")
+    cabecalhos = ws.row_values(1)
+    try:
+        col_pa = cabecalhos.index("primeiro_acesso") + 1
+    except ValueError:
+        return False
+
+    registros = ws.get_all_records()
+    for idx, r in enumerate(registros):
+        if str(r.get("telefone", "")).strip() == str(telefone).strip():
+            if not str(r.get("primeiro_acesso", "")).strip():
+                linha = idx + 2
+                ws.update_cell(linha, col_pa, datetime.now(_TZ).strftime("%d/%m/%Y %H:%M"))
+                return True
+            return False
+    return False
+
+
 def nome_esta_cadastrado(nome: str) -> bool:
     ws = get_worksheet("apostadores")
     return any(
