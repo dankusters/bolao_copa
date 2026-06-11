@@ -60,8 +60,8 @@ Meta → POST /webhook → thread background → processar_webhook() → handler
 **`sheets/client.py`** expõe `get_worksheet(nome)` para acessar abas da planilha `tabela_copa`. Abas disponíveis: `jogos`, `bet`, `apostadores`, `lembretes`. O ID da planilha está hardcoded na constante `FOLDER_ID`.
 
 **`sheets/apostas.py`** contém helpers críticos de tempo:
-- `_data_logica_hoje()` — retorna a data lógica do dia. Antes das 02:00 AM (Brasília), pertencemos ainda ao dia anterior.
-- `_eh_jogo_do_dia(dt)` — retorna True para jogos na data lógica de hoje OU na madrugada do dia seguinte (< 02:00 AM). **Todos os checks de "jogos do dia" usam este helper.**
+- `_data_logica_hoje()` — retorna a data atual em Brasília (`datetime.now(_TZ).date()`). Usa a data do calendário sem retrocesso de dia.
+- `_eh_jogo_do_dia(dt)` — retorna True para jogos na data de hoje OU na madrugada do dia seguinte (< 02:00 AM). **Todos os checks de "jogos do dia" usam este helper.**
 - `tem_jogo_madrugada(jogos)` — True se algum jogo da lista é na madrugada do dia seguinte.
 - `verificar_e_marcar_primeiro_acesso(telefone)` — retorna o nome do apostador se é o primeiro acesso (e grava a data na coluna `primeiro_acesso`), None caso contrário.
 - **Todos os checks de horário usam `ZoneInfo("America/Sao_Paulo")` explicitamente** — o servidor VPS roda em UTC.

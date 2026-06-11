@@ -51,11 +51,7 @@ def buscar_membros_familia(familia: str) -> list[str]:
 
 
 def _data_logica_hoje() -> date:
-    """Antes das 02:00 AM pertencemos ainda ao dia anterior."""
-    agora = datetime.now(_TZ)
-    if agora.hour < 2:
-        return (agora - timedelta(days=1)).date()
-    return agora.date()
+    return datetime.now(_TZ).date()
 
 
 def _eh_jogo_do_dia(dt: datetime) -> bool:
