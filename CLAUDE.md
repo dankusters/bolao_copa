@@ -28,6 +28,7 @@ uv run python -c "from sheets.aposta_automatica import gerar_apostas_automaticas
 ssh -i ~/.ssh/bolao_deploy deploy@2.25.131.88 "journalctl -u bolao --no-pager -n 50"
 ssh -i ~/.ssh/bolao_deploy deploy@2.25.131.88 "tail -20 /home/deploy/bolao_apostas.log"
 ssh -i ~/.ssh/bolao_deploy deploy@2.25.131.88 "tail -20 /home/deploy/bolao_resultados.log"
+ssh -i ~/.ssh/bolao_deploy deploy@2.25.131.88 "tail -20 /home/deploy/bolao_lembretes.log"
 
 # Testar atualização de resultados manualmente
 uv run python scripts/atualizar_resultados.py
@@ -56,7 +57,7 @@ Meta → POST /webhook → thread background → processar_webhook() → handler
 
 **`estado.py`** mantém `aguardando_resposta: set[str]` em memória — o conjunto de números de telefone que aguardam a próxima mensagem do usuário para uma resposta contextual. **Este estado é perdido ao reiniciar o servidor.**
 
-**`sheets/client.py`** expõe `get_worksheet(nome)` para acessar abas da planilha `tabela_copa`. Abas disponíveis: `jogos`, `bet`, `apostadores`. O ID da planilha está hardcoded na constante `FOLDER_ID`.
+**`sheets/client.py`** expõe `get_worksheet(nome)` para acessar abas da planilha `tabela_copa`. Abas disponíveis: `jogos`, `bet`, `apostadores`, `lembretes`. O ID da planilha está hardcoded na constante `FOLDER_ID`.
 
 **`sheets/apostas.py`** contém helpers críticos de tempo:
 - `_data_logica_hoje()` — retorna a data lógica do dia. Antes das 02:00 AM (Brasília), pertencemos ainda ao dia anterior.
@@ -85,6 +86,8 @@ Meta → POST /webhook → thread background → processar_webhook() → handler
 
 **`handlers/aposta.py`** verifica existência de jogos do dia **antes** da trava de 12:00 PM — assim, dias sem jogos exibem mensagem correta independente do horário.
 
+**`scripts/enviar_lembretes.py`** script standalone chamado pelo cron a cada minuto. Lê a aba `lembretes` e envia mensagens agendadas para os destinatários definidos. Campos da aba: `data_hora` (DD/MM/YYYY HH:MM), `mensagem`, `destinatario` (`todos`, `familia:NomeFamilia` ou `sem_aposta`), `enviado` (marcado `sim` após envio). Usa `enviar_texto()` — só funciona dentro da janela de 24h de interação do usuário com o bot.
+
 ## Variáveis de ambiente (`.env`)
 
 ```
@@ -108,6 +111,12 @@ Colunas relevantes: `id_jogo`, `data_hora`, `time_mandante`, `time_visitante`, `
 ### Aba `bet`
 Colunas relevantes: `bet_date`, `nome`, `família`, `id_jogo`, `time_mandante`, `time_visitante`, `mandante_x_visitante`, `gols_mandante`, `gols_visitante`, `situacao`, `isbetdone`, `ponto_placar`, `ponto_situacao`, `pontos_totais`, `origem`.
 - `COL_FORMULA_INICIO` em `sheets/apostas.py` deve apontar para a primeira coluna com fórmula. Atualmente é 11 (coluna K = `situacao`). Se adicionar/remover colunas antes dessa posição, atualizar a constante.
+
+### Aba `lembretes`
+Colunas relevantes: `data_hora`, `mensagem`, `destinatario`, `enviado`.
+- `data_hora`: formato `DD/MM/YYYY HH:MM` (horário de Brasília).
+- `destinatario`: `todos` (todos os apostadores), `familia:NomeFamilia` (filtra por família) ou `sem_aposta` (quem ainda não apostou nos jogos do dia).
+- `enviado`: deixar em branco; preenchido automaticamente com `sim` após o disparo. Para reenviar, apagar o valor.
 
 ## Credenciais Google Sheets
 
@@ -162,11 +171,14 @@ Crontab do usuário `deploy` (ver/editar com `crontab -e` na VPS):
 
 # Atualização de resultados — a cada 5 min entre 15h-02h UTC (12h-23h Brasília)
 */5 15-23,0-2 * * * cd /home/deploy/bolao_copa && ~/.local/bin/uv run python scripts/atualizar_resultados.py >> /home/deploy/bolao_resultados.log 2>&1
+
+# Lembretes agendados — a cada minuto
+* * * * * cd /home/deploy/bolao_copa && ~/.local/bin/uv run python scripts/enviar_lembretes.py >> /home/deploy/bolao_lembretes.log 2>&1
 ```
 
 **Importante:** usar sempre `~/.local/bin/uv` (caminho completo) — o cron não herda o PATH do usuário e `uv` não é encontrado sem o caminho absoluto.
 
-Logs: `tail -20 /home/deploy/bolao_apostas.log` e `tail -20 /home/deploy/bolao_resultados.log`
+Logs: `tail -20 /home/deploy/bolao_apostas.log` e `tail -20 /home/deploy/bolao_resultados.log` e `tail -20 /home/deploy/bolao_lembretes.log`
 
 ## Pontos de atenção
 
