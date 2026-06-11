@@ -182,8 +182,9 @@ def atualizar_resultados():
         visitante_pt = _traduzir(jogo_api["awayTeam"]["name"])
         gm = jogo_api["score"]["fullTime"]["home"]
         gv = jogo_api["score"]["fullTime"]["away"]
-        pm = jogo_api["score"]["penalties"]["home"]
-        pv = jogo_api["score"]["penalties"]["away"]
+        _pen = jogo_api["score"].get("penalties") or {}
+        pm = _pen.get("home")
+        pv = _pen.get("away")
 
         if gm is None or gv is None:
             print(f"[SKIP] {mandante_pt} x {visitante_pt}: placar final não disponível ainda.")
