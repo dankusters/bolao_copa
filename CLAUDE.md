@@ -193,3 +193,5 @@ Logs: `tail -20 /home/deploy/bolao_apostas.log` e `tail -20 /home/deploy/bolao_r
 - Para adicionar um novo tipo de envio, adicionar função em `whatsapp/sender.py`.
 - Todo handler que encerra o fluxo sem chamar `enviar_template()` deve chamar `enviar_cta()` ao final — padrão estabelecido em todos os handlers existentes.
 - Se `atualizar_resultados.py` logar `[MISS]` para algum time, adicionar a entrada no dicionário `NOMES_TIMES` dentro do próprio script.
+- **Latência da API football-data.org (plano gratuito):** o placar pode demorar até ~45 minutos após o encerramento do jogo para aparecer na API, mesmo com o status já em `FINISHED`. O script trata isso corretamente com `[SKIP]` — não indica bug. O cron da VPS captura automaticamente quando o placar estiver disponível.
+- **Campo `penalties` ausente na API:** para jogos decididos no tempo normal, o campo `score.penalties` não existe na resposta (diferente de existir com valor `null`). O script usa `.get("penalties") or {}` para tratar isso.
