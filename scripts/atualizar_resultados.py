@@ -10,6 +10,7 @@ Cron recomendado (a cada 5 min, das 12h às 23h Brasília = 15h-02h UTC):
 import sys
 import os
 from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -81,6 +82,7 @@ NOMES_TIMES: dict[str, str] = {
     "Albania": "Albânia",
     "Georgia": "Geórgia",
     "Bosnia and Herzegovina": "Bósnia e Herzegovina",
+    "Bosnia-Herzegovina": "Bósnia e Herzegovina",
     # África
     "Morocco": "Marrocos",
     "Senegal": "Senegal",
@@ -193,7 +195,10 @@ def atualizar_resultados():
         encontrado = False
         for idx, row in enumerate(registros):
             dt = _parse_data_hora(str(row.get("data_hora", "")))
-            if not dt or dt.date() != hoje:
+            if not dt:
+                continue
+            dt_date = dt.astimezone(ZoneInfo("UTC")).date() if dt.tzinfo else dt.date()
+            if dt_date != hoje:
                 continue
             if (row["time_mandante"].strip() == mandante_pt and
                     row["time_visitante"].strip() == visitante_pt):
