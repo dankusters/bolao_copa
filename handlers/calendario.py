@@ -1,7 +1,10 @@
-from datetime import date
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from whatsapp.sender import enviar_texto, enviar_cta
 from sheets.calendario import buscar_calendario
 from utils.flags import bandeira
+
+_TZ = ZoneInfo("America/Sao_Paulo")
 
 _DIAS_PT = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
 
@@ -14,7 +17,7 @@ def handle_calendario(numero: str):
         enviar_cta(numero)
         return
 
-    hoje = date.today()
+    hoje = datetime.now(_TZ).date()
     blocos = ["📅 *Jogos de hoje e dos próximos cinco dias*\n"]
     data_atual = None
 
