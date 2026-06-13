@@ -70,7 +70,7 @@ Meta → POST /webhook → thread background → processar_webhook() → handler
 
 **`scripts/apostas_automaticas.py`** script standalone chamado pelo cron no VPS às 15:00 UTC (12:00 PM Brasília). Também é chamado inline pelo handler `apostas_dia` ao primeiro acesso após as 12:00 PM, eliminando condição de corrida com o cron.
 
-**`scripts/atualizar_resultados.py`** script standalone que consulta a API `football-data.org` (competição `WC`) e atualiza `gols_mandante`/`gols_visitante`/`penaltis_mandante`/`penaltis_visitante` na aba `jogos` para jogos finalizados no dia. Requer `FOOTBALL_DATA_TOKEN` no `.env`. As colunas de pênaltis só são gravadas quando o jogo foi a pênaltis (`score.penalties` não nulo na API). O dicionário `NOMES_TIMES` dentro do script mapeia nomes em inglês (API) para português (planilha) — se aparecer `[MISS]` nos logs, adicionar a entrada faltante lá.
+**`scripts/atualizar_resultados.py`** script standalone que consulta a API `football-data.org` (competição `WC`) e atualiza `gols_mandante`/`gols_visitante`/`penaltis_mandante`/`penaltis_visitante` na aba `jogos` para jogos finalizados no dia. Requer `FOOTBALL_DATA_TOKEN` no `.env`. As colunas de pênaltis só são gravadas quando o jogo foi a pênaltis (`score.penalties` não nulo na API). O dicionário `NOMES_TIMES` dentro do script mapeia nomes em inglês (API) para português (planilha) — se aparecer `[MISS]` nos logs, adicionar a entrada faltante lá. A comparação de data usa UTC (igual à API): datetimes com timezone são convertidos via `.astimezone(ZoneInfo("UTC"))` antes de comparar com `date.today()` — isso garante que jogos de 23h BRT (= 02h UTC do dia seguinte) sejam encontrados corretamente.
 
 **`handlers/calendario.py`** + **`sheets/calendario.py`** exibem jogos de hoje e dos próximos **5 dias** com horário ou placar (se já encerrado), acionados pelo botão "Ver calendário de jogos e resultados".
 
@@ -184,7 +184,7 @@ Logs: `tail -20 /home/deploy/bolao_apostas.log` e `tail -20 /home/deploy/bolao_r
 
 - O `ACCESS_TOKEN` da Meta expira em 24h em ambiente de teste. Sintoma: erro `401 OAuthException code 190` nos logs.
 - Ao gerar nova chave do Google Sheets: atualizar `CREDENTIALS_FILE` em `sheets/client.py` e copiar o novo `.json` para a VPS via `scp` antes ou logo após o deploy.
-- **Timezone:** o servidor VPS roda em UTC. Todos os checks de horário (12:00 PM, 02:00 AM) devem usar `datetime.now(ZoneInfo("America/Sao_Paulo"))` — nunca `datetime.now()` sem timezone.
+- **Timezone:** o servidor VPS roda em UTC. Todos os checks de horário e data de negócio (12:00 PM, 02:00 AM, "qual é hoje") devem usar `datetime.now(ZoneInfo("America/Sao_Paulo"))` — nunca `datetime.now()` nem `date.today()` sem timezone. Exceção: `atualizar_resultados.py` compara datas em UTC deliberadamente para bater com as datas da API `football-data.org`.
 - **Dia lógico:** jogos até 02:00 AM do dia seguinte são considerados "jogos de hoje". Usar sempre `_eh_jogo_do_dia(dt)` de `sheets/apostas.py` para este filtro.
 - **Quota Google Sheets:** evitar múltiplas leituras da mesma aba em loops. Carregar os dados uma vez e filtrar em memória. A API permite ~60 leituras/minuto.
 - **Webhook assíncrono:** o `processar_webhook()` roda em background thread. O Flask retorna 200 imediatamente para evitar retries da Meta. Efeito colateral: exceções no handler não retornam HTTP 500 — monitorar via `journalctl`.
