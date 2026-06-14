@@ -9,7 +9,7 @@ Cron recomendado (a cada 5 min, das 12h às 23h Brasília = 15h-02h UTC):
 """
 import sys
 import os
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -126,10 +126,12 @@ def _traduzir(nome_api: str) -> str:
 
 
 def buscar_jogos_finalizados_hoje() -> list[dict]:
-    hoje = date.today().isoformat()
+    hoje = date.today()
+    # Nas 00h-02h UTC o cron ainda cobre jogos do dia anterior UTC (ex: 19h BRT = 22h UTC)
+    ontem = hoje - timedelta(days=1) if datetime.utcnow().hour < 3 else hoje
     url = f"{API_BASE}/competitions/{COMPETITION}/matches"
     headers = {"X-Auth-Token": FOOTBALL_DATA_TOKEN}
-    params = {"dateFrom": hoje, "dateTo": hoje, "status": "FINISHED"}
+    params = {"dateFrom": ontem.isoformat(), "dateTo": hoje.isoformat(), "status": "FINISHED"}
 
     try:
         resp = requests.get(url, headers=headers, params=params, timeout=30)
@@ -177,6 +179,8 @@ def atualizar_resultados():
         return
 
     hoje = date.today()
+    ontem = hoje - timedelta(days=1) if datetime.utcnow().hour < 3 else hoje
+    datas_validas = {hoje, ontem}
     atualizados = 0
 
     for jogo_api in jogos_api:
@@ -198,7 +202,7 @@ def atualizar_resultados():
             if not dt:
                 continue
             dt_date = dt.astimezone(ZoneInfo("UTC")).date() if dt.tzinfo else dt.date()
-            if dt_date != hoje:
+            if dt_date not in datas_validas:
                 continue
             if (row["time_mandante"].strip() == mandante_pt and
                     row["time_visitante"].strip() == visitante_pt):
