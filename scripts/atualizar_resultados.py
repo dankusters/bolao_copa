@@ -128,7 +128,7 @@ def _traduzir(nome_api: str) -> str:
 def buscar_jogos_finalizados_hoje() -> list[dict]:
     hoje = date.today()
     # Nas 00h-02h UTC o cron ainda cobre jogos do dia anterior UTC (ex: 19h BRT = 22h UTC)
-    ontem = hoje - timedelta(days=1) if datetime.utcnow().hour < 3 else hoje
+    ontem = hoje - timedelta(days=1) if datetime.now(ZoneInfo("UTC")).hour < 3 else hoje
     url = f"{API_BASE}/competitions/{COMPETITION}/matches"
     headers = {"X-Auth-Token": FOOTBALL_DATA_TOKEN}
     params = {"dateFrom": ontem.isoformat(), "dateTo": hoje.isoformat(), "status": "FINISHED"}
@@ -179,7 +179,7 @@ def atualizar_resultados():
         return
 
     hoje = date.today()
-    ontem = hoje - timedelta(days=1) if datetime.utcnow().hour < 3 else hoje
+    ontem = hoje - timedelta(days=1) if datetime.now(ZoneInfo("UTC")).hour < 3 else hoje
     datas_validas = {hoje, ontem}
     atualizados = 0
 
