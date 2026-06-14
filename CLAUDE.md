@@ -76,7 +76,7 @@ Meta → POST /webhook → thread background → processar_webhook() → handler
 
 **`handlers/apostas_dia.py`** exibe apostas do dia (após 12:00 PM Brasília). Chama `gerar_apostas_automaticas()` antes de exibir — idempotente, garante que apostas faltantes sejam criadas mesmo se o cron falhar. Exibe aviso de madrugada quando aplicável.
 
-**`handlers/aposta.py`** gerencia o fluxo de apostas manuais. Trava às 12:00 PM (Brasília) — apostas não são aceitas após este horário.
+**`handlers/aposta.py`** gerencia o fluxo de apostas manuais com três janelas: antes das 12:00 exibe os jogos de hoje; entre 12:00 e 18:00 informa que a janela de amanhã ainda não abriu; a partir das 18:00 exibe os jogos do dia seguinte (usando `buscar_jogos_amanha()`). O limite para apostas do dia seguinte é 12:00 do próprio dia.
 
 **`handlers/detalhe_apostador.py`** exibe as últimas 10 apostas de um apostador com total de pontos no bolão, total de placares acertados e total de situações acertadas (calculados sobre o histórico completo).
 
@@ -188,7 +188,7 @@ Logs: `tail -20 /home/deploy/bolao_apostas.log` e `tail -20 /home/deploy/bolao_r
 - **Dia lógico:** a janela do dia cobre jogos de hoje **a partir das 02:00 AM** + madrugada do dia seguinte (< 02:00 AM). Jogos antes das 02:00 AM do dia atual pertencem ao dia anterior. Usar sempre `_eh_jogo_do_dia(dt)` de `sheets/apostas.py` para este filtro — nunca comparar datas manualmente.
 - **Quota Google Sheets:** evitar múltiplas leituras da mesma aba em loops. Carregar os dados uma vez e filtrar em memória. A API permite ~60 leituras/minuto.
 - **Webhook assíncrono:** o `processar_webhook()` roda em background thread. O Flask retorna 200 imediatamente para evitar retries da Meta. Efeito colateral: exceções no handler não retornam HTTP 500 — monitorar via `journalctl`.
-- A trava das 12:00 PM em `handlers/aposta.py` e `handlers/apostas_dia.py` está **ativa em produção**. Para testes locais sem restrição de horário, chamar `gerar_apostas_automaticas()` diretamente.
+- **Janela de apostas:** 00:00–12:00 → jogos de hoje; 12:00–18:00 → janela fechada; 18:00–00:00 → jogos de amanhã. A trava de 12:00 PM em `handlers/apostas_dia.py` está **ativa em produção**. Para testes locais sem restrição de horário, chamar `gerar_apostas_automaticas()` diretamente.
 - Para adicionar um novo tipo de mensagem recebida (ex: `interactive`, `location`), criar `handlers/novo_tipo.py` e registrar em `whatsapp/webhook.py`.
 - Para adicionar um novo tipo de envio, adicionar função em `whatsapp/sender.py`.
 - Todo handler que encerra o fluxo sem chamar `enviar_template()` deve chamar `enviar_cta()` ao final — padrão estabelecido em todos os handlers existentes.
