@@ -61,7 +61,7 @@ Meta → POST /webhook → thread background → processar_webhook() → handler
 
 **`sheets/apostas.py`** contém helpers críticos de tempo:
 - `_data_logica_hoje()` — retorna a data atual em Brasília (`datetime.now(_TZ).date()`). Usa a data do calendário sem retrocesso de dia.
-- `_eh_jogo_do_dia(dt)` — retorna True para jogos na data de hoje OU na madrugada do dia seguinte (< 02:00 AM). **Todos os checks de "jogos do dia" usam este helper.**
+- `_eh_jogo_do_dia(dt)` — retorna True para jogos na data de hoje **a partir das 02:00 AM** OU na madrugada do dia seguinte (< 02:00 AM). Jogos antes das 02:00 AM do dia atual pertencem à janela do dia anterior. **Todos os checks de "jogos do dia" usam este helper.**
 - `tem_jogo_madrugada(jogos)` — True se algum jogo da lista é na madrugada do dia seguinte.
 - `verificar_e_marcar_primeiro_acesso(telefone)` — retorna o nome do apostador se é o primeiro acesso (e grava a data na coluna `primeiro_acesso`), None caso contrário.
 - **Todos os checks de horário usam `ZoneInfo("America/Sao_Paulo")` explicitamente** — o servidor VPS roda em UTC.
@@ -185,7 +185,7 @@ Logs: `tail -20 /home/deploy/bolao_apostas.log` e `tail -20 /home/deploy/bolao_r
 - O `ACCESS_TOKEN` da Meta expira em 24h em ambiente de teste. Sintoma: erro `401 OAuthException code 190` nos logs.
 - Ao gerar nova chave do Google Sheets: atualizar `CREDENTIALS_FILE` em `sheets/client.py` e copiar o novo `.json` para a VPS via `scp` antes ou logo após o deploy.
 - **Timezone:** o servidor VPS roda em UTC. Todos os checks de horário e data de negócio (12:00 PM, 02:00 AM, "qual é hoje") devem usar `datetime.now(ZoneInfo("America/Sao_Paulo"))` — nunca `datetime.now()` nem `date.today()` sem timezone. Exceção: `atualizar_resultados.py` compara datas em UTC deliberadamente para bater com as datas da API `football-data.org`. Usar `datetime.now(ZoneInfo("UTC"))` — `datetime.utcnow()` está deprecated no Python 3.12+.
-- **Dia lógico:** jogos até 02:00 AM do dia seguinte são considerados "jogos de hoje". Usar sempre `_eh_jogo_do_dia(dt)` de `sheets/apostas.py` para este filtro.
+- **Dia lógico:** a janela do dia cobre jogos de hoje **a partir das 02:00 AM** + madrugada do dia seguinte (< 02:00 AM). Jogos antes das 02:00 AM do dia atual pertencem ao dia anterior. Usar sempre `_eh_jogo_do_dia(dt)` de `sheets/apostas.py` para este filtro — nunca comparar datas manualmente.
 - **Quota Google Sheets:** evitar múltiplas leituras da mesma aba em loops. Carregar os dados uma vez e filtrar em memória. A API permite ~60 leituras/minuto.
 - **Webhook assíncrono:** o `processar_webhook()` roda em background thread. O Flask retorna 200 imediatamente para evitar retries da Meta. Efeito colateral: exceções no handler não retornam HTTP 500 — monitorar via `journalctl`.
 - A trava das 12:00 PM em `handlers/aposta.py` e `handlers/apostas_dia.py` está **ativa em produção**. Para testes locais sem restrição de horário, chamar `gerar_apostas_automaticas()` diretamente.
