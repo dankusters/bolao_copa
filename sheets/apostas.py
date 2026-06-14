@@ -66,13 +66,14 @@ def _eh_jogo_do_dia(dt: datetime) -> bool:
     return False
 
 
-def tem_jogo_madrugada(jogos: list[dict]) -> bool:
-    """Retorna True se algum jogo da lista é na madrugada do dia seguinte (< 02:00 AM)."""
-    dia = _data_logica_hoje()
-    amanha = dia + timedelta(days=1)
+def tem_jogo_madrugada(jogos: list[dict], referencia: date | None = None) -> bool:
+    """Retorna True se algum jogo da lista é na madrugada do dia seguinte à referencia (< 02:00 AM)."""
+    if referencia is None:
+        referencia = _data_logica_hoje()
+    proximo = referencia + timedelta(days=1)
     for j in jogos:
         dt = _parse_data_hora(str(j.get("data_hora", "")))
-        if dt and dt.date() == amanha and dt.hour < 2:
+        if dt and dt.date() == proximo and dt.hour < 2:
             return True
     return False
 
@@ -83,6 +84,21 @@ def buscar_jogos_hoje() -> list[dict]:
     for r in ws.get_all_records():
         dt = _parse_data_hora(str(r.get("data_hora", "")))
         if dt and _eh_jogo_do_dia(dt):
+            jogos.append(r)
+    return jogos
+
+
+def buscar_jogos_amanha() -> list[dict]:
+    """Jogos do dia seguinte (>= 02:00 AM) + madrugada do subsequente (< 02:00 AM)."""
+    ws = get_worksheet("jogos")
+    amanha = _data_logica_hoje() + timedelta(days=1)
+    depois = amanha + timedelta(days=1)
+    jogos = []
+    for r in ws.get_all_records():
+        dt = _parse_data_hora(str(r.get("data_hora", "")))
+        if not dt:
+            continue
+        if (dt.date() == amanha and dt.hour >= 2) or (dt.date() == depois and dt.hour < 2):
             jogos.append(r)
     return jogos
 

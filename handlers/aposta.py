@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from estado import get_estado, set_estado, limpar_estado
 from whatsapp.sender import enviar_texto, enviar_template, enviar_cta
@@ -7,6 +7,7 @@ from sheets.apostas import (
     buscar_apostador,
     buscar_membros_familia,
     buscar_jogos_hoje,
+    buscar_jogos_amanha,
     apostas_existentes,
     gravar_apostas,
     nome_esta_cadastrado,
@@ -16,15 +17,27 @@ from sheets.apostas import (
 
 def iniciar_aposta(numero: str):
     agora = datetime.now(ZoneInfo("America/Sao_Paulo"))
+    hora = agora.hour
 
-    jogos_hoje = buscar_jogos_hoje()
-    if not jogos_hoje:
-        enviar_texto(numero, "Hoje não temos jogos da Copa! Aguarde! ⚽")
+    if hora < 12:
+        jogos = buscar_jogos_hoje()
+        data_ref = agora.strftime("%d/%m")
+        ref_date = agora.date()
+        label = "hoje"
+    elif hora < 18:
+        enviar_texto(numero, "As apostas do dia já encerraram às 12:00. As apostas de amanhã abrem às 18:00! ⏰")
         enviar_cta(numero)
         return
+    else:
+        jogos = buscar_jogos_amanha()
+        amanha = agora.date() + timedelta(days=1)
+        data_ref = amanha.strftime("%d/%m")
+        ref_date = amanha
+        label = "amanhã"
 
-    if agora.hour >= 12:
-        enviar_texto(numero, "As apostas só são aceitas até as 12:00 PM. O robô 🤖 fará as apostas de hoje por você!")
+    if not jogos:
+        dia_label = "Hoje" if label == "hoje" else "Amanhã"
+        enviar_texto(numero, f"{dia_label} não temos jogos da Copa! Aguarde! ⚽")
         enviar_cta(numero)
         return
 
@@ -39,13 +52,12 @@ def iniciar_aposta(numero: str):
     membros = buscar_membros_familia(familia)
     outros = [m for m in membros if m.strip().lower() != nome.strip().lower()]
 
-    count = len(jogos_hoje)
+    count = len(jogos)
     plural = "jogo" if count == 1 else "jogos"
-    data_hoje = agora.strftime("%d/%m")
 
     jogos_lista = [
         f"{bandeira(j['time_mandante'])} {j['time_mandante']} x {bandeira(j['time_visitante'])} {j['time_visitante']} às {_extrair_hora(str(j['data_hora']))}"
-        for j in jogos_hoje
+        for j in jogos
     ]
     jogos_lista[-1] += "."
     jogos_linhas = "\n".join(jogos_lista)
@@ -57,15 +69,15 @@ def iniciar_aposta(numero: str):
     )
 
     aviso_madrugada = (
-        "\n\n⚠️ Os jogos de madrugada do dia seguinte são considerados apostas de hoje."
-        if tem_jogo_madrugada(jogos_hoje) else ""
+        f"\n\n⚠️ Os jogos de madrugada do dia seguinte são considerados apostas de {label}."
+        if tem_jogo_madrugada(jogos, ref_date) else ""
     )
 
     set_estado(numero, "aguardando_nome", {
         "apostador_nome": nome,
         "apostador_familia": familia,
         "membros_familia": membros,
-        "jogos_hoje": jogos_hoje,
+        "jogos_hoje": jogos,
         "jogo_atual_idx": 0,
         "apostas": [],
     })
@@ -73,7 +85,7 @@ def iniciar_aposta(numero: str):
     enviar_texto(
         numero,
         f"Olá, {nome}!\n\n"
-        f"Hoje, {data_hoje}, teremos {count} {plural}:\n\n"
+        f"{label.capitalize()}, {data_ref}, teremos {count} {plural}:\n\n"
         f"{jogos_linhas}{aviso_madrugada}\n\n"
         f"Escreva o nome para quem você vai fazer a aposta. Se for você mesmo, coloque o seu nome.\n\n{aviso}",
     )
