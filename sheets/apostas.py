@@ -55,10 +55,15 @@ def _data_logica_hoje() -> date:
 
 
 def _eh_jogo_do_dia(dt: datetime) -> bool:
-    """Jogos até 02:00 AM do dia seguinte contam como do dia atual."""
+    """Jogos do dia atual (>= 02:00 AM) + madrugada do dia seguinte (< 02:00 AM).
+    Jogos antes das 02:00 AM do dia atual pertencem à janela do dia anterior."""
     dia = _data_logica_hoje()
     amanha = dia + timedelta(days=1)
-    return dt.date() == dia or (dt.date() == amanha and dt.hour < 2)
+    if dt.date() == dia and dt.hour >= 2:
+        return True
+    if dt.date() == amanha and dt.hour < 2:
+        return True
+    return False
 
 
 def tem_jogo_madrugada(jogos: list[dict]) -> bool:
