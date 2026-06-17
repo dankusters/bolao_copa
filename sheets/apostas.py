@@ -109,7 +109,7 @@ def apostas_existentes(nome: str, ids_jogos: list) -> list[dict]:
         registros = ws.get_all_records()
     except Exception:
         return []
-    ids_str = {str(i) for i in ids_jogos}
+    ids_str = {str(i).strip() for i in ids_jogos}
     return [
         r for r in registros
         if str(r.get("nome", "")).strip().lower() == nome.strip().lower()

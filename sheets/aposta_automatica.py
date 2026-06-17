@@ -38,7 +38,7 @@ def gerar_apostas_automaticas() -> int:
     if not jogos_hoje:
         return 0
 
-    ids_jogos = [str(j["id_jogo"]) for j in jogos_hoje]
+    ids_jogos = [str(j["id_jogo"]).strip() for j in jogos_hoje]
     ids_jogos_set = set(ids_jogos)
     apostadores = get_worksheet("apostadores").get_all_records()
     todos_bets = get_worksheet("bet").get_all_records()
@@ -52,14 +52,14 @@ def gerar_apostas_automaticas() -> int:
             continue
 
         ids_com_aposta = {
-            str(b["id_jogo"])
+            str(b["id_jogo"]).strip()
             for b in todos_bets
             if str(b.get("nome", "")).strip().lower() == nome.lower()
             and str(b.get("id_jogo", "")).strip() in ids_jogos_set
         }
 
         for jogo in jogos_hoje:
-            id_jogo = str(jogo["id_jogo"])
+            id_jogo = str(jogo["id_jogo"]).strip()
             if id_jogo in ids_com_aposta:
                 continue
 
@@ -67,7 +67,7 @@ def gerar_apostas_automaticas() -> int:
                 "bet_date": now_str,
                 "nome": nome,
                 "família": familia,
-                "id_jogo": id_jogo,
+                "id_jogo": id_jogo,  # já normalizado com .strip() acima
                 "time_mandante": jogo.get("time_mandante", ""),
                 "time_visitante": jogo.get("time_visitante", ""),
                 "mandante_x_visitante": jogo.get("mandante_x_visitante", ""),

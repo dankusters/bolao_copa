@@ -129,7 +129,7 @@ def _handle_nome(numero: str, nome_digitado: str, dados: dict):
         return
 
     jogos_hoje = dados["jogos_hoje"]
-    ids_jogos = [j["id_jogo"] for j in jogos_hoje]
+    ids_jogos = [str(j["id_jogo"]).strip() for j in jogos_hoje]
     bets = apostas_existentes(match, ids_jogos)
 
     if bets:
@@ -190,7 +190,7 @@ def _handle_gols_visitante(numero: str, texto: str, dados: dict):
 
     jogo = dados["jogos_hoje"][dados["jogo_atual_idx"]]
     dados["apostas"].append({
-        "id_jogo": jogo["id_jogo"],
+        "id_jogo": str(jogo["id_jogo"]).strip(),
         "time_mandante": jogo["time_mandante"],
         "time_visitante": jogo["time_visitante"],
         "mandante_x_visitante": jogo["mandante_x_visitante"],

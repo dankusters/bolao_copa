@@ -17,12 +17,12 @@ def buscar_apostas_do_dia() -> list[dict]:
 
     ws_bet = get_worksheet("bet")
     bets = ws_bet.get_all_records()
-    ids_hoje = {str(j["id_jogo"]) for j in jogos_hoje}
+    ids_hoje = {str(j["id_jogo"]).strip() for j in jogos_hoje}
     bets_hoje = [b for b in bets if str(b.get("id_jogo", "")).strip() in ids_hoje]
 
     resultado = []
     for jogo in jogos_hoje:
-        id_jogo = str(jogo["id_jogo"])
+        id_jogo = str(jogo["id_jogo"]).strip()
         apostas_jogo = [b for b in bets_hoje if str(b.get("id_jogo", "")).strip() == id_jogo]
         resultado.append({"jogo": jogo, "apostas": apostas_jogo})
 
@@ -51,12 +51,12 @@ def buscar_detalhe_por_jogo(limite: int = 6) -> list[dict]:
 
     ws_bet = get_worksheet("bet")
     bets = ws_bet.get_all_records()
-    ids = {str(j["id_jogo"]) for j in jogos_recentes}
+    ids = {str(j["id_jogo"]).strip() for j in jogos_recentes}
     bets_filtrados = [b for b in bets if str(b.get("id_jogo", "")).strip() in ids]
 
     resultado = []
     for jogo in jogos_recentes:
-        id_jogo = str(jogo["id_jogo"])
+        id_jogo = str(jogo["id_jogo"]).strip()
         apostas_jogo = [b for b in bets_filtrados if str(b.get("id_jogo", "")).strip() == id_jogo]
         resultado.append({"jogo": jogo, "apostas": apostas_jogo})
 
