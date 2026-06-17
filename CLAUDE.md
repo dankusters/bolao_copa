@@ -80,7 +80,7 @@ Meta → POST /webhook → thread background → processar_webhook() → handler
 
 **`handlers/detalhe_apostador.py`** exibe as últimas 10 apostas de um apostador com total de pontos no bolão, total de placares acertados e total de situações acertadas (calculados sobre o histórico completo).
 
-**`handlers/detalhe_jogo.py`** + **`sheets/detalhe_jogo.py`** exibem os **últimos 6 jogos atualizados** (sem filtro de dia) com todas as apostas e pontuações.
+**`handlers/detalhe_jogo.py`** + **`sheets/detalhe_jogo.py`** exibem os **últimos 6 jogos atualizados** (sem filtro de dia) com todas as apostas e pontuações. Cada linha de aposta usa formato compacto (`- Nome: X x Y (N pontos)`) — nomes dos times omitidos por linha pois já aparecem no cabeçalho do jogo, evitando exceder o limite de 4096 chars do WhatsApp.
 
 **`handlers/ranking.py`** + **`sheets/ranking.py`** exibem ranking geral e por família. Em ambos os rankings: desempate por placares na mosca; em caso de empate em pontos **e** placares, os nomes/famílias aparecem na mesma posição.
 
