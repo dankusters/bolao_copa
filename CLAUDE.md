@@ -147,6 +147,8 @@ Qualquer push na branch `main` dispara o workflow `.github/workflows/deploy.yml`
 
 O GitHub Actions ocasionalmente falha por timeout de SSH — neste caso, rodar o deploy manualmente via SSH resolve.
 
+**Atenção:** não fazer deploy manual via SSH e push no `main` simultaneamente. O GitHub Actions dispara em paralelo e os dois `systemctl restart` sobrepõem-se, matando workers no meio de execuções em background thread (sintoma: mensagem "Atualizando apostas, aguarde..." chega mas a resposta nunca vem). Se isso ocorrer, aguardar o serviço estabilizar e pedir ao usuário que teste novamente.
+
 ### Arquivos sensíveis no VPS (não versionados)
 Estes arquivos existem apenas no VPS e nas máquinas locais — nunca no git:
 - `/home/deploy/bolao_copa/.env`
