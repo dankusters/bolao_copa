@@ -1,3 +1,4 @@
+import unicodedata
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from estado import get_estado, set_estado, limpar_estado
@@ -115,9 +116,18 @@ def handle_aposta(numero: str, texto: str) -> bool:
     return True
 
 
+def _normalizar(s: str) -> str:
+    return "".join(
+        c for c in unicodedata.normalize("NFD", s.lower().strip())
+        if unicodedata.category(c) != "Mn"
+    )
+
+
 def _handle_nome(numero: str, nome_digitado: str, dados: dict):
     membros = dados["membros_familia"]
-    match = next((m for m in membros if m.strip().lower() == nome_digitado.lower()), None)
+    match = next((m for m in membros if _normalizar(m) == _normalizar(nome_digitado)), None)
+
+    print(f"[APOSTA] nome_digitado={repr(nome_digitado)} | membros={membros} | match={repr(match)}")
 
     if not match:
         if nome_esta_cadastrado(nome_digitado):
