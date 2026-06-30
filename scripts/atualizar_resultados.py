@@ -186,11 +186,24 @@ def atualizar_resultados():
     for jogo_api in jogos_api:
         mandante_pt = _traduzir(jogo_api["homeTeam"]["name"])
         visitante_pt = _traduzir(jogo_api["awayTeam"]["name"])
-        gm = jogo_api["score"]["fullTime"]["home"]
-        gv = jogo_api["score"]["fullTime"]["away"]
         _pen = jogo_api["score"].get("penalties") or {}
         pm = _pen.get("home")
         pv = _pen.get("away")
+        if pm is not None and pv is not None:
+            # Jogo de pênaltis: usa regularTime + extraTime para evitar pegar o placar dos pênaltis
+            _rt = jogo_api["score"].get("regularTime") or {}
+            _et = jogo_api["score"].get("extraTime") or {}
+            gm_rt = _rt.get("home")
+            gv_rt = _rt.get("away")
+            if gm_rt is not None and gv_rt is not None:
+                gm = gm_rt + (_et.get("home") or 0)
+                gv = gv_rt + (_et.get("away") or 0)
+            else:
+                gm = (jogo_api["score"].get("fullTime") or {}).get("home")
+                gv = (jogo_api["score"].get("fullTime") or {}).get("away")
+        else:
+            gm = jogo_api["score"]["fullTime"]["home"]
+            gv = jogo_api["score"]["fullTime"]["away"]
 
         if gm is None or gv is None:
             print(f"[SKIP] {mandante_pt} x {visitante_pt}: placar final não disponível ainda.")

@@ -44,9 +44,14 @@ def handle_calendario(numero: str):
         flag_v = bandeira(visitante)
         gm = str(jogo.get("gols_mandante", "")).strip()
         gv = str(jogo.get("gols_visitante", "")).strip()
+        pm = str(jogo.get("penaltis_mandante", "")).strip()
+        pv = str(jogo.get("penaltis_visitante", "")).strip()
 
         if gm and gv:
-            linha = f"{flag_m} {mandante} {gm} x {gv} {visitante} {flag_v} ✅"
+            if pm and pv:
+                linha = f"{flag_m} {mandante} ({pm}) {gm} x {gv} ({pv}) {visitante} {flag_v} ✅"
+            else:
+                linha = f"{flag_m} {mandante} {gm} x {gv} {visitante} {flag_v} ✅"
         else:
             hora = dt.strftime("%H:%M")
             linha = f"{flag_m} {mandante} x {visitante} {flag_v} — {hora}"

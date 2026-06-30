@@ -20,9 +20,14 @@ def handle_detalhe_jogo(numero: str):
         visitante = jogo["time_visitante"]
         gm = jogo["gols_mandante"]
         gv = jogo["gols_visitante"]
+        pm = str(jogo.get("penaltis_mandante", "")).strip()
+        pv = str(jogo.get("penaltis_visitante", "")).strip()
         flag_m = bandeira(mandante)
         flag_v = bandeira(visitante)
-        linhas.append(f"*{flag_m} {mandante} {gm} x {gv} {visitante} {flag_v}*")
+        if pm and pv:
+            linhas.append(f"*{flag_m} {mandante} ({pm}) {gm} x {gv} ({pv}) {visitante} {flag_v}*")
+        else:
+            linhas.append(f"*{flag_m} {mandante} {gm} x {gv} {visitante} {flag_v}*")
         linhas.append("")
 
         if not apostas:
